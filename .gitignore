@@ -197,3 +197,6 @@ cython_debug/
 CLIP
 CoOp
 Dassl.pytorch
+
+# Results
+results
