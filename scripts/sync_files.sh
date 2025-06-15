@@ -21,6 +21,7 @@ declare -A files_to_copy=(
     ["datasets/glare.yaml"]="CoOp/configs/datasets/glare.yaml"
     ["datasets/lighting_condition.yaml"]="CoOp/configs/datasets/lighting_condition.yaml"
     ["datasets/weather.yaml"]="CoOp/configs/datasets/weather.yaml"
+    ["clip_adapter.py"]="CoOp/trainers/clip_adapter.py"
 )
 
 # Copy files with prompt if target exists
