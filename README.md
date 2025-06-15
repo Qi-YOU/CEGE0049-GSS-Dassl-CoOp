@@ -77,4 +77,36 @@ If you encounter errors while installing packages, please double-check your netw
 This script may prompt you to press a key to continue at certain steps, giving you a moment to review your system status before proceeding.
 
 ### 3. Download Dataset
+
+
+### 4. Dassl-CoOp Style Dataset
+A folder under `$DATA` is created named `global_street_scapes`.
+
+The result directory structure should look like:
+
+```
+global_street_scapes/
+├── img/
+│   ├── 1/
+|   |   ├── xx.jpeg
+|   |   └── ...
+│   ├── 2/
+│   ├── 3/
+│   ├── 4/
+│   ├── 5/
+│   ├── 6/
+│   └── 7/
+├── train/
+│   ├── weather.csv
+│   ├── glare.csv
+│   └── lighting_condition.csv
+└── test/
+    ├── weather.csv
+    ├── glare.csv
+    └── lighting_condition.csv
+
+```
+
+where each diretory named after `1` to `7` contains images in `.jpeg` format.
+
 TBC.
