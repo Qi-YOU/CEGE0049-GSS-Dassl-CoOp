@@ -64,7 +64,6 @@ class GlobalStreetScapesBase(DatasetBase):
         # Setup paths
         root = os.path.abspath(os.path.expanduser(cfg.DATASET.ROOT))
         self.dataset_dir = os.path.join(root, self.dataset_dir)
-        self.img_dir = os.path.join(self.dataset_dir, "img")
 
         # Load data from CSVs
         train = self.read_data("train")
@@ -122,7 +121,7 @@ class GlobalStreetScapesBase(DatasetBase):
             for row in reader:
                 img_rel = row[img_col_idx]
                 label_str = row[attr_col_idx]
-                impath = os.path.join(self.img_dir, img_rel)
+                impath = os.path.join(self.dataset_dir, img_rel)
                 label = label_str.strip().lower()
                 items.append(Datum(impath=impath, label=label, classname=label))
 
