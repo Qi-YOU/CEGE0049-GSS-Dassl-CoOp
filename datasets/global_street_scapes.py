@@ -35,7 +35,6 @@ import csv
 import math
 import random
 from collections import defaultdict
-from tqdm import tqdm
 from dassl.data.datasets import DATASET_REGISTRY, Datum, DatasetBase
 
 
@@ -102,13 +101,39 @@ class GlobalStreetScapesBase(DatasetBase):
             List of Datum objects with image path and attribute label.
         """
         label_path = os.path.join(self.dataset_dir, split, f"{self.attr_name}.csv")
-        items = []
+
+        # First pass: collect unique labels
+        unique_labels = set()
 
         with open(label_path, newline="") as f:
             reader = csv.reader(f)
             header = next(reader)
+
+            try:
+                attr_col_idx = header.index(self.attr_name)
+            except ValueError:
+                raise ValueError(f"CSV {label_path} must have a '{self.attr_name}' column")
+
+            for row in reader:
+                label_str = row[attr_col_idx].strip().lower()
+                unique_labels.add(label_str)
+
+        # Build label to int mapping
+        self.label_to_id = {label: idx for idx, label in enumerate(sorted(unique_labels))}
+        if split == "train":
+            print(f"Number of labels of {self.attr_name} class: {len(self.label_to_id)}\n")
+
+            for label in sorted(self.label_to_id):
+                print(f"\t{label}: {self.label_to_id[label]}")
+            print()
+
+        # Second pass: build dataset in datums
+        items = []
+        with open(label_path, newline="") as f:
+            reader = csv.reader(f)
+            header = next(reader)
             
-            # Find row index
+            # Find row index of correct colnames
             try:
                 img_col_idx = header.index("img_path")  # Assuming the image path is listed as img_path
             except ValueError:
@@ -119,13 +144,17 @@ class GlobalStreetScapesBase(DatasetBase):
             except ValueError:
                 raise ValueError(f"CSV {label_path} must have a '{self.attr_name}' column")
 
-            rows = list(reader)
-            for row in tqdm(rows, desc=f"Reading {split} {self.attr_name}", leave=False):
+            for row in reader:
                 img_rel = row[img_col_idx]
-                label_str = row[attr_col_idx]
+                label_str = row[attr_col_idx].strip().lower()
+
                 impath = os.path.join(self.dataset_dir, img_rel)
-                label = label_str.strip().lower()
-                items.append(Datum(impath=impath, label=label, classname=label))
+                label_int = self.label_to_id[label_str]
+
+                # Generate the datum of path to the image,
+                # label in 0-indexed integers,
+                # and classnames in strings
+                items.append(Datum(impath=impath, label=label_int, classname=label_str))
 
         return items
 
