@@ -1,0 +1,6 @@
+DATASET:
+  NAME: "GlobalStreetScapes_Lighting"
+  ROOT: "F:/dataset"
+  NUM_SHOTS: 16
+
+SEED: 42
