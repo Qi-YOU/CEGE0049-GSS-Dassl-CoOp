@@ -54,26 +54,11 @@ CUSTOM_TEMPLATES = {
 def load_clip_model(cfg):
     """
     Load the CLIP model onto GPU if available, otherwise CPU.
-    Tries to load a JIT archive first; if it fails, falls back to state_dict.
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
     backbone_name = cfg.MODEL.BACKBONE.NAME
-    url = clip._MODELS[backbone_name]
-    model_path = clip._download(url)
-
-    try:
-        # Try loading as JIT archive
-        model = torch.jit.load(model_path, map_location=device).eval()
-        state_dict = None
-    except RuntimeError:
-        # Fall back to state_dict
-        state_dict = torch.load(model_path, map_location=device)
-        model = clip.build_model(state_dict)
-    else:
-        model = clip.build_model(model.state_dict())
-
-    model.to(device)
+    model, preprocess = clip.load(backbone_name, device=device)
+    
     return model, device
 
 
