@@ -35,6 +35,7 @@ import csv
 import math
 import random
 from collections import defaultdict
+from tqdm import tqdm
 from dassl.data.datasets import DATASET_REGISTRY, Datum, DatasetBase
 
 
@@ -82,7 +83,7 @@ class GlobalStreetScapesBase(DatasetBase):
 
         # Subsample base or new classes
         subsample = cfg.DATASET.SUBSAMPLE_CLASSES
-        train, val, test = self.subsample_classes(train, val, test, subsample)
+        train, val, test = self.subsample_classes(train, val, test, subsample=subsample)
 
         # Final dataset assignment
         super().__init__(train_x=train, val=val, test=test)
@@ -118,7 +119,8 @@ class GlobalStreetScapesBase(DatasetBase):
             except ValueError:
                 raise ValueError(f"CSV {label_path} must have a '{self.attr_name}' column")
 
-            for row in reader:
+            rows = list(reader)
+            for row in tqdm(rows, desc=f"Reading {split} {self.attr_name}", leave=False):
                 img_rel = row[img_col_idx]
                 label_str = row[attr_col_idx]
                 impath = os.path.join(self.dataset_dir, img_rel)
