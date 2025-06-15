@@ -107,38 +107,46 @@ class TextEncoder(nn.Module):
         self.clip_model = clip_model
         self.dtype = clip_model.dtype
 
-    def normalize_label(self, name, label):
+    def normalize_classnames(self):
         """
-        Normalize label values based on dataset-specific rules.
+        Normalize classnames based on dataset-specific rules.
+        Returns a list of normalized class names (strings).
         """
-        if name == "GlobalStreetScapes_Lighting":
-            # Treat dawn/dusk variants as 'twilight'
-            label = label.lower()
-            if label in ["dawn", "dusk", "dawn/dusk", "dusk/dawn"]:
-                return "twilight"
-            return label
+        name = self.cfg.DATASET.NAME
+        normalized = []
 
-        elif name == "GlobalStreetScapes_Glare":
-            # If glare == "yes", return empty string; if "no", return "no "
-            label = label.lower()
-            if label == "yes":
-                return "glare"
-            elif label == "no":
-                return "no glare"
-            return label
+        for c in self.classnames:
+            # Ensure c is a string
+            c_str = str(c).replace("_", " ").lower()
 
-        # Default: return label as-is
-        return label
+            if name == "GlobalStreetScapes_Lighting":
+                if c_str in ["dawn", "dusk", "dawn/dusk", "dusk/dawn"]:
+                    normalized.append("twilight")
+                else:
+                    normalized.append(c_str)
+
+            elif name == "GlobalStreetScapes_Glare":
+                if c_str == "yes":
+                    normalized.append("glare")
+                elif c_str == "no":
+                    normalized.append("no glare")
+                else:
+                    normalized.append(c_str)
+
+            else:
+                # Default: use original string
+                normalized.append(c_str)
+
+        return normalized
+
     
     def forward(self):
         # Get template for current dataset
         template = CUSTOM_TEMPLATES[self.cfg.DATASET.NAME]
 
         # Normalize classnames based on the dataset
-        prompts = []
-        for c in self.classnames:
-            normalized = self.normalize_label(self.cfg.DATASET.NAME, c.replace("_", " "))
-            prompts.append(template.format(normalized))
+        normalized_classnames = self.normalize_classnames()
+        prompts = [template.format(c) for c in normalized_classnames]
 
         # Tokenize and encode prompts
         prompts = torch.cat([clip.tokenize(p) for p in prompts])
