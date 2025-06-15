@@ -63,7 +63,7 @@ git clone --depth 1 https://github.com/KaiyangZhou/CoOp.git
     iii. Make sure the setup script is executable and then run it:
     ```bash
     # Ensure the script is executable
-    chmod +x scripts/setup_venv.sh
+    # chmod +x scripts/setup_venv.sh
     ```
     ```bash
     # Run the script with Git Bash
@@ -110,3 +110,26 @@ global_street_scapes/
 where each diretory named after `1` to `7` contains images in `.jpeg` format.
 
 TBC.
+
+### 5. Sync Project Files to CoOp
+Before running the CoOp pipeline, make sure required files are correctly placed across dependencies like CoOp/, CLIP/, etc.
+
+- For Linux/macOS:
+    ```bash
+    # Ensure the script is executable
+    chmod +x scripts/sync_files.sh
+
+    # Run the script
+    ./scripts/sync_files.sh
+    ```
+
+- For Windows (Git Bash or Conda Prompt):
+    ```bash
+    # Ensure the script is executable
+    # chmod +x scripts/sync_files.sh
+
+    # Run the script
+    bash scripts/sync_files.sh
+    ```
+
+This script verifies the working directory and copies necessary files into appropriate submodules. If a file already exists, you'll be prompted to continue by press any key or cancel with Ctrl+C.
