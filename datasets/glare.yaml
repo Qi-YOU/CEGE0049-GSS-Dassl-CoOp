@@ -1,4 +1,4 @@
 DATASET:
   NAME: "GlobalStreetScapes_Glare"
-  ROOT: "F:/dataset"
-  NUM_SHOTS: 16
+  ROOT: "../autodl-tmp"
+  # NUM_SHOTS: 16
