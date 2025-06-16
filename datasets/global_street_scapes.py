@@ -105,7 +105,7 @@ class GlobalStreetScapesBase(DatasetBase):
         # First pass: collect unique labels
         unique_labels = set()
 
-        with open(label_path, newline="") as f:
+        with open(label_path, encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
             header = next(reader)
 
@@ -130,7 +130,7 @@ class GlobalStreetScapesBase(DatasetBase):
 
         # Second pass: build dataset in datums
         items = []
-        with open(label_path, newline="") as f:
+        with open(label_path, encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
             header = next(reader)
             
