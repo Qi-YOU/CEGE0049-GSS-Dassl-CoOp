@@ -122,9 +122,10 @@ class GlobalStreetScapesBase(DatasetBase):
         self.label_to_id = {label: idx for idx, label in enumerate(sorted(unique_labels))}
         if split == "train":
             print(f"Number of labels of {self.attr_name} class: {len(self.label_to_id)}\n")
+            max_label_len = max(len(label) for label in self.label_to_id) # Compute max tabel length
 
             for label in sorted(self.label_to_id):
-                print(f"\t{label}: {self.label_to_id[label]}")
+                print(f"- {label.ljust(max_label_len)}: {self.label_to_id[label]}") # Left-aligned output
             print()
 
         # Second pass: build dataset in datums
