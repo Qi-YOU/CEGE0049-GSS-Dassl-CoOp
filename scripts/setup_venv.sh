@@ -149,9 +149,25 @@ fi
 
 echo "Patching Dassl.pytorch with hotfixes..."
 echo "  (Dassl uses legacy scheduler from PyTorch 1.6,"
-echo "  which is deprecated since 2.2 and removed in 2.7)"
+echo "  which is deprecated since 2.2 and removed in 2.7;"
+echo "  Enhancement is applied through patches"
+echo "  for better customized performance"
+
+# Patch lr_scheduler.py
 cp "$PATCH_DIR/lr_scheduler.py" "$DASSL_DIR/dassl/optim/lr_scheduler.py" || {
     echo "ERROR: Failed to patch lr_scheduler.py. Aborting."
+    exit 1
+}
+
+# Patch evaluator.py
+cp "$PATCH_DIR/evaluator.py" "$DASSL_DIR/dassl/evaluation/evaluator.py" || {
+    echo "ERROR: Failed to patch evaluator.py. Aborting."
+    exit 1
+}
+
+echo "  Patching defaults.py to add new config options for improved evaluation features."
+cp "$PATCH_DIR/defaults.py" "$DASSL_DIR/dassl/config/defaults.py" || {
+    echo "ERROR: Failed to patch defaults.py. Aborting."
     exit 1
 }
 
