@@ -201,6 +201,10 @@ pip install -r "$COOP_DIR/requirements.txt"
 echo "Installing Huggingface Transformers library..."
 pip install transformers
 
+# Install Plot Libraries (for Visualization)
+echo "Installing Plot libraries..."
+pip install matplotlib
+
 # Check for broken packages
 clear
 echo "Checking installed packages..."
