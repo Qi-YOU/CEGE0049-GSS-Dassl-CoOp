@@ -8,6 +8,7 @@ A script to parse training log files and visualize training metrics including:
 import os
 import re
 import argparse
+from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -143,12 +144,13 @@ def plot_learning_curve(acc_loss_dict, dataset_name, experiment_name, results_ro
     labels = [line.get_label() for line in lines]
     ax1.legend(lines, labels, loc="lower right", bbox_to_anchor=(1.0, 0.075), fontsize=12)
 
-    plt.title(f"Training Curve: {dataset_name.capitalize()}", fontsize=14)
+    plt.title(f"Training Curve: {dataset_name.replace('_', ' ').title()}", fontsize=14)
     fig.tight_layout()
 
     save_dir = os.path.join(results_root, dataset_name, experiment_name)
     os.makedirs(save_dir, exist_ok=True)
     save_path = os.path.join(save_dir, f"learning_curve-{dataset_name}-{experiment_name}.png")
+    plt.tight_layout()
     plt.savefig(save_path, dpi=300)
 
     plt.close()
@@ -176,13 +178,14 @@ def plot_lr_curve(lr_dict, dataset_name, experiment_name, results_root):
     ax.tick_params(axis="both", labelsize=12)
 
     ax.legend(loc="upper right", fontsize=12)
-    plt.title(f"Learning Rate Curve: {dataset_name.capitalize()}", fontsize=14)
+    plt.title(f"Learning Rate Curve: {dataset_name.replace('_', ' ').title()}", fontsize=14)
 
     fig.tight_layout()
 
     save_dir = os.path.join(results_root, dataset_name, experiment_name)
     os.makedirs(save_dir, exist_ok=True)
     save_path = os.path.join(save_dir, f"lr_curve-{dataset_name}-{experiment_name}.png")
+    plt.tight_layout()
     plt.savefig(save_path, dpi=300)
 
     plt.close()
@@ -231,7 +234,7 @@ def plot_confusion_matrix(cmat_path, dataset_name, experiment_name, results_root
 
     disp.plot(cmap=plt.cm.Blues, values_format=values_fmt, ax=ax,
               text_kw={"fontsize": 12}, colorbar=False)
-    plt.title(f"Confusion Matrix: {dataset_name.capitalize()}", fontsize=14)
+    plt.title(f"Confusion Matrix: {dataset_name.replace('_', ' ').title()}", fontsize=14)
     ax.set_xlabel("Predicted Label", fontsize=12)
     ax.set_ylabel("True Label", fontsize=12)
     plt.xticks(fontsize=12)
@@ -240,6 +243,7 @@ def plot_confusion_matrix(cmat_path, dataset_name, experiment_name, results_root
     save_dir = os.path.join(results_root, dataset_name, experiment_name)
     os.makedirs(save_dir, exist_ok=True)
     save_path = os.path.join(save_dir, f"confusion_matrix-{dataset_name}-{experiment_name}.png")
+    plt.tight_layout()
     plt.savefig(save_path, dpi=300)
 
     plt.close()
@@ -252,47 +256,54 @@ def main(results_root="results"):
     Args:
         results_root (str): Root directory containing datasets and experiments.
     """
+
+    # Collect all (dataset_name, experiment_name) combinations
+    dataset_experiment_pairs = []
     for dataset_name in os.listdir(results_root):
-        # Construct the full path for the current dataset directory
         dataset_path = os.path.join(results_root, dataset_name)
 
         # Skip if the path is not a directory (e.g., a file)
         if not os.path.isdir(dataset_path):
             continue
-
         for experiment_name in os.listdir(dataset_path):
-            # Construct the full path for the current experiment directory
             experiment_path = os.path.join(dataset_path, experiment_name)
 
             # Skip if the path is not a directory
-            if not os.path.isdir(experiment_path):
-                continue
+            if os.path.isdir(experiment_path):
+                dataset_experiment_pairs.append((dataset_name, experiment_name))
+    
+    # Plot with tqdm progressbar
+    for dataset_name, experiment_name in tqdm(dataset_experiment_pairs, desc="Plotting..."):
+        # Construct the full path for the current experiment directory
+        experiment_path = os.path.join(results_root, dataset_name, experiment_name)
 
-            # Find log files named like 'log.txt' or 'log.txt-<timestamp>'
-            log_files = [f for f in os.listdir(experiment_path) if f.startswith("log.txt")]
-            
-            # Skip this experiment if no log files are found
-            if not log_files:
-                continue
+        # Find log files named like 'log.txt' or 'log.txt-<timestamp>'
+        log_files = [f for f in os.listdir(experiment_path) if f.startswith("log.txt")]
 
-            # Pick the latest log file by sorting the filenames in descending order
-            latest_log = find_latest_log(log_files)
-            log_path = os.path.join(experiment_path, latest_log)
+        # Skip this experiment if no log files are found
+        if not log_files:
+            continue
 
-            # Parse the log file to extract accuracy, loss, and learning rate data per epoch
-            acc_loss_dict, lr_dict = parse_log_file(log_path)
+        # Pick the latest log file by sorting the filenames in descending order
+        latest_log = find_latest_log(log_files)
+        log_path = os.path.join(experiment_path, latest_log)
 
-            # Plot and save the learning curve (accuracy and loss) for this experiment
-            plot_learning_curve(acc_loss_dict, dataset_name, experiment_name, results_root)
-            
-            # Plot and save the learning rate curve for this experiment
-            plot_lr_curve(lr_dict, dataset_name, experiment_name, results_root)
+        # Parse the log file to extract accuracy, loss, and learning rate data per epoch
+        acc_loss_dict, lr_dict = parse_log_file(log_path)
 
-            # Plot and save the confusion matrix visualization if the file exists
-            cmat_path = os.path.join(experiment_path, "cmat.pt")
+        # Plot and save the learning curve (accuracy and loss) for this experiment
+        plot_learning_curve(acc_loss_dict, dataset_name, experiment_name, results_root)
+
+        # Plot and save the learning rate curve for this experiment
+        plot_lr_curve(lr_dict, dataset_name, experiment_name, results_root)
+
+        # Plot and save the confusion matrix visualization if the file exists
+        cmat_path = os.path.join(experiment_path, "cmat.pt")
+        if os.path.isfile(cmat_path):
             plot_confusion_matrix(
                 cmat_path, dataset_name, experiment_name,
-                results_root, get_labels_by_dataset(dataset_name).keys())
+                results_root, get_labels_by_dataset(dataset_name).keys()
+            )
 
 
 if __name__ == "__main__":
