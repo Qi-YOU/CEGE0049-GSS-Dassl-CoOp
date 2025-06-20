@@ -17,6 +17,7 @@ from torch.nn import functional as F
 
 from dassl.engine import TRAINER_REGISTRY, TrainerX
 from dassl.metrics import compute_accuracy
+from sklearn.metrics import f1_score
 from dassl.utils import load_pretrained_weights, load_checkpoint
 from dassl.optim import build_optimizer, build_lr_scheduler
 
@@ -267,7 +268,8 @@ class CLIP_Adapter(TrainerX):
 
         loss_summary = {
             "loss": loss.item(),
-            "acc": compute_accuracy(output, label)[0].item()
+            "acc": compute_accuracy(output, label)[0].item(),
+            "f1": f1_score(output, label, average="macro", zero_division=0)
         }
 
         # Update learning rate at the end of the epoch
