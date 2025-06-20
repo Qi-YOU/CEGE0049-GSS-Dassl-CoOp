@@ -305,3 +305,17 @@ _C.TRAINER.FIXMATCH = CN()
 _C.TRAINER.FIXMATCH.WEIGHT_U = 1.0  # weight on the unlabeled loss
 _C.TRAINER.FIXMATCH.CONF_THRE = 0.95  # confidence threshold
 _C.TRAINER.FIXMATCH.STRONG_TRANSFORMS = ()
+
+######
+# LOSS
+######
+_C.TRAINER.LOSS = CN()
+_C.TRAINER.LOSS.NAME = "ce"  # Options: ce, focal, cb
+# CE has no additional parameters - `ce`
+# Focal loss parameters - `focal`
+_C.TRAINER.LOSS.FOCAL_GAMMA = 2.0
+_C.TRAINER.LOSS.FOCAL_ALPHA = None  # Optional: list or tensor of class weights
+# Class-Balanced loss parameters - `cb`： TBC
+# _C.TRAINER.LOSS.CB_BETA = 0.999
+# _C.TRAINER.LOSS.CB_MODE = "softmax"  # Options: softmax (for multi-class), sigmoid (for multi-label)
+# _C.TRAINER.LOSS.CB_BASE_LOSS = "ce"  # Options: ce, focal
