@@ -183,6 +183,46 @@ class CustomCLIP(nn.Module):
 class CLIP_Adapter(TrainerX):
     """ CLIP-Adapter """
 
+    def build_loss(self):
+        """Build and initialize the loss function"""
+        cfg = self.cfg
+        lossname = cfg.TRAINER.LOSS.NAME
+
+        if lossname == "ce":
+            return nn.CrossEntropyLoss()
+        
+        elif lossname == "focal":
+            gamma = cfg.TRAINER.LOSS.FOCAL_GAMMA
+            alpha = cfg.TRAINER.LOSS.FOCAL_ALPHA
+
+            class FocalLoss(nn.Module):
+                def __init__(self, gamma=2.0, alpha=None):
+                    super().__init__()
+                    self.gamma = gamma
+                    self.alpha = alpha
+
+                def forward(self, inputs, targets):
+                    log_probs = F.log_softmax(inputs, dim=1)
+                    probs = torch.exp(log_probs)
+                    targets_onehot = F.one_hot(targets, num_classes=inputs.size(1)).float()
+                    pt = (probs * targets_onehot).sum(dim=1)
+
+                    if self.alpha is not None:
+                        alpha_t = self.alpha[targets]
+                        loss = -alpha_t * ((1 - pt) ** self.gamma) * torch.log(pt + 1e-9)
+                    else:
+                        loss = -((1 - pt) ** self.gamma) * torch.log(pt + 1e-9)
+
+                    return loss.mean()
+
+            alpha_tensor = None
+            if alpha is not None:
+                alpha_tensor = torch.tensor(alpha, dtype=torch.float32).cuda()
+
+            return FocalLoss(gamma=gamma, alpha=alpha_tensor)
+        else:
+            raise ValueError(f"Unknown loss name: {lossname}")
+
     def build_model(self):
         """Build and initialize the CLIP-Adapter model."""
         cfg = self.cfg
@@ -204,6 +244,7 @@ class CLIP_Adapter(TrainerX):
             load_pretrained_weights(self.model.adapter, cfg.MODEL.INIT_WEIGHTS)
 
         self.model.to(self.device)
+        self.loss_fn = self.build_loss()
 
         # Build optimizer and scheduler for the adapter only
         # NOTE: only give text_encoder.adapter to the optimizer
@@ -221,7 +262,7 @@ class CLIP_Adapter(TrainerX):
 
         image, label = self.parse_batch_train(batch)
         output = self.model(image)
-        loss = F.cross_entropy(output, label)
+        loss = self.loss_fn(output, label)
         self.model_backward_and_update(loss)
 
         loss_summary = {
