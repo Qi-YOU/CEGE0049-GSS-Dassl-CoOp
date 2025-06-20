@@ -266,10 +266,17 @@ class CLIP_Adapter(TrainerX):
         loss = self.loss_fn(output, label)
         self.model_backward_and_update(loss)
 
+        # Convert tensors to CPU numpy arrays for metric calculation
+        output_cpu = output.detach().cpu().numpy()
+        label_cpu = label.detach().cpu().numpy()
+        
+        # For F1 score, we need to convert probabilities to predicted class indices
+        preds = output_cpu.argmax(axis=1)
+
         loss_summary = {
             "loss": loss.item(),
             "acc": compute_accuracy(output, label)[0].item(),
-            "f1": f1_score(output, label, average="macro", zero_division=0)
+            "f1": f1_score(label_cpu, preds, average="macro", zero_division=0) * 100
         }
 
         # Update learning rate at the end of the epoch
