@@ -92,19 +92,22 @@ class Classification(EvaluatorBase):
             self._y_true,
             self._y_pred,
             average="macro",
-            labels=np.unique(self._y_true)
+            labels=np.unique(self._y_true),
+            zero_division=0
         )
         macro_recall = 100.0 * recall_score(
             self._y_true,
             self._y_pred,
             average="macro",
-            labels=np.unique(self._y_true)
+            labels=np.unique(self._y_true),
+            zero_division=0
         )
         macro_f1 = 100.0 * f1_score(
             self._y_true,
             self._y_pred,
             average="macro",
-            labels=np.unique(self._y_true)
+            labels=np.unique(self._y_true),
+            zero_division=0
         )
 
         # The first value will be returned by trainer.test()
@@ -162,7 +165,8 @@ class Classification(EvaluatorBase):
             report = classification_report(
                 self._y_true,
                 self._y_pred,
-                target_names=[self._lab2cname[i] for i in sorted(set(self._y_true))]
+                target_names=[self._lab2cname[i] for i in sorted(set(self._y_true))],
+                zero_division=0
             )
             report_path = osp.join(self.cfg.OUTPUT_DIR, "classification_report.txt")
             with open(report_path, "w") as f:
