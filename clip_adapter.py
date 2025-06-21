@@ -94,13 +94,13 @@ def compute_weights(labels, strategy):
 
         # Normalize weights so they sum to 1
         weights /= weights.sum()
-    elif strategy is None or strategy in ["none", "N/A", "defaults"]:
+    elif strategy is None or strategy in ["none", "N/A", "default"]:
         # No weighting applied
-        weights = None
+        return None
     else:
         raise ValueError(f"Unsupported class weighting strategy: {strategy}")
     
-    return weights.cuda()
+    return weights
 
 
 
@@ -235,6 +235,8 @@ class CLIP_Adapter(TrainerX):
         if class_weighting:
             train_labels = [x.label for x in self.dm.dataset.train_x]
             weights = compute_weights(train_labels, class_weighting)
+            if weights is not None:
+                weights = weights.cuda()
         else:
             weights = None
 
