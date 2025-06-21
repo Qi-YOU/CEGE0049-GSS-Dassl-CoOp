@@ -311,6 +311,7 @@ _C.TRAINER.FIXMATCH.STRONG_TRANSFORMS = ()
 ######
 _C.TRAINER.LOSS = CN()
 _C.TRAINER.LOSS.NAME = "ce"  # Options: ce, focal, cb
+_C.TRAINER.LOSS.CLASS_WEIGHTING = "default"  # Options: inverse, uniform, or None(none, N/A, default)
 # CE has no additional parameters - `ce`
 # Focal loss parameters - `focal`
 _C.TRAINER.LOSS.FOCAL_GAMMA = 2.0
