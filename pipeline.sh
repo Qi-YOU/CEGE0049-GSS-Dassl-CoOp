@@ -26,7 +26,8 @@ for DATASET in "${DATASETS[@]}"; do
       --dataset-config-file "$DATASET_CONFIG" \
       --config-file "$TRAINER_CONFIG" \
       --output-dir "$OUTPUT_DIR" \
-      --seed $SEED
+      --seed $SEED \
+      TRAINER.LOSS.CLASS_WEIGHTING $WEIGHT
 
     sleep $SLEEP_TIME
   done
