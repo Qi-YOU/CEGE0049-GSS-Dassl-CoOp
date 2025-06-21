@@ -233,8 +233,8 @@ class CLIP_Adapter(TrainerX):
 
         # Compute weights if class weighting is enabled
         if class_weighting:
-            # You must have access to all labels for weight computation
-            weights = compute_weights(self.dm.dataset.train_y, class_weighting)
+            train_labels = [x.label for x in self.dm.dataset.train_x]
+            weights = compute_weights(train_labels, class_weighting)
         else:
             weights = None
 
