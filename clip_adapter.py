@@ -15,6 +15,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+import numpy as np
+
 from dassl.engine import TRAINER_REGISTRY, TrainerX
 from dassl.metrics import compute_accuracy
 from sklearn.metrics import f1_score
@@ -61,6 +63,45 @@ def load_clip_model(cfg):
     model, preprocess = clip.load(backbone_name, device=device)
     
     return model, device
+
+
+def compute_weights(labels, strategy):
+    """
+    Compute the class weights based on different strategies if specified.
+    """
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    total_samples = len(labels)
+
+    if strategy == "inverse":
+        # Inverse strategy assigns higher weight to classes with fewer samples
+        # Weight for class i = 1 / count[i]
+        weights = 1.0 / torch.tensor(counts, dtype=torch.float)
+
+        # Normalize weights so they sum to 1
+        weights /= weights.sum()
+
+    elif strategy == "uniform":
+        # Uniform strategy tries to make effective sample contribution from each class equal
+        # First compute fraction of each class in the dataset
+        class_fractions = torch.tensor(counts, dtype=torch.float) / total_samples
+
+        # Ideal average weight per class if all were balanced
+        desired_avg_weight = 1.0 / len(unique_labels)
+
+        # Weight for class i = desired_avg_weight / actual_fraction[i]
+        # Classes with fewer samples get higher weight
+        weights = desired_avg_weight / class_fractions
+
+        # Normalize weights so they sum to 1
+        weights /= weights.sum()
+    elif strategy is None or strategy in ["none", "N/A", "defaults"]:
+        # No weighting applied
+        weights = None
+    else:
+        raise ValueError(f"Unsupported class weighting strategy: {strategy}")
+    
+    return weights.cuda()
+
 
 
 class Adapter(nn.Module):
@@ -188,13 +229,23 @@ class CLIP_Adapter(TrainerX):
         """Build and initialize the loss function"""
         cfg = self.cfg
         lossname = cfg.TRAINER.LOSS.NAME
+        class_weighting = getattr(cfg.TRAINER.LOSS, "CLASS_WEIGHTING", None)
+
+        # Compute weights if class weighting is enabled
+        if class_weighting:
+            # You must have access to all labels for weight computation
+            weights = compute_weights(self.dm.dataset.train_y, class_weighting)
+        else:
+            weights = None
 
         if lossname == "ce":
-            return nn.CrossEntropyLoss()
+            return nn.CrossEntropyLoss(weight=weights)
         
         elif lossname == "focal":
             gamma = cfg.TRAINER.LOSS.FOCAL_GAMMA
-            alpha = cfg.TRAINER.LOSS.FOCAL_ALPHA
+            alpha = torch.tensor(
+                cfg.TRAINER.LOSS.FOCAL_ALPHA, dtype=torch.float32
+                ).cuda() if cfg.TRAINER.LOSS.FOCAL_ALPHA is not None else weights
 
             class FocalLoss(nn.Module):
                 def __init__(self, gamma=2.0, alpha=None):
