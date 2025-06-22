@@ -236,7 +236,7 @@ class CLIP_Adapter(TrainerX):
             train_labels = [x.label for x in self.dm.dataset.train_x]
             weights = compute_weights(train_labels, class_weighting)
             if weights is not None:
-                weights = weights.cuda()
+                weights = weights.to(self.device)
         else:
             weights = None
 
@@ -247,7 +247,7 @@ class CLIP_Adapter(TrainerX):
             gamma = cfg.TRAINER.LOSS.FOCAL_GAMMA
             alpha = torch.tensor(
                 cfg.TRAINER.LOSS.FOCAL_ALPHA, dtype=torch.float32
-                ).cuda() if cfg.TRAINER.LOSS.FOCAL_ALPHA is not None else weights
+                ).to(self.device) if cfg.TRAINER.LOSS.FOCAL_ALPHA is not None else weights
 
             class FocalLoss(nn.Module):
                 def __init__(self, gamma=2.0, alpha=None):
@@ -271,7 +271,7 @@ class CLIP_Adapter(TrainerX):
 
             alpha_tensor = None
             if alpha is not None:
-                alpha_tensor = torch.tensor(alpha, dtype=torch.float32).cuda()
+                alpha_tensor = torch.tensor(alpha, dtype=torch.float32).to(self.device)
 
             return FocalLoss(gamma=gamma, alpha=alpha_tensor)
         else:
