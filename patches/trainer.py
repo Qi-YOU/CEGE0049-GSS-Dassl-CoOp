@@ -454,7 +454,7 @@ class SimpleTrainer(TrainerBase):
         )
 
         if do_test and self.cfg.TEST.FINAL_MODEL == "best_val":
-            curr_result = self.test(split="val")
+            curr_result = self.test(split="val", verbose=False)
             is_best = curr_result["accuracy"] > self.best_result["accuracy"]
             if is_best:
                 self.best_result = curr_result
@@ -477,7 +477,7 @@ class SimpleTrainer(TrainerBase):
             self.save_model(self.epoch, self.output_dir)
 
     @torch.no_grad()
-    def test(self, split=None):
+    def test(self, split=None, verbose=True):
         """A generic testing pipeline."""
         self.set_model_mode("eval")
         self.evaluator.reset()
@@ -491,14 +491,15 @@ class SimpleTrainer(TrainerBase):
             split = "test"  # in case val_loader is None
             data_loader = self.test_loader
 
-        print(f"Evaluate on the *{split}* set")
+        if not verbose:
+            print(f"Evaluate on the *{split}* set")
 
-        for batch_idx, batch in enumerate(tqdm(data_loader)):
+        for batch_idx, batch in enumerate(tqdm(data_loader, disable=not verbose)):
             input, label = self.parse_batch_test(batch)
             output = self.model_inference(input)
             self.evaluator.process(output, label)
 
-        results = self.evaluator.evaluate()
+        results = self.evaluator.evaluate(verbose=verbose)
 
         for k, v in results.items():
             tag = f"{split}/{k}"
@@ -575,8 +576,7 @@ class TrainerXU(SimpleTrainer):
             losses.update(loss_summary)
 
             meet_freq = (self.batch_idx + 1) % self.cfg.TRAIN.PRINT_FREQ == 0
-            only_few_batches = self.num_batches < self.cfg.TRAIN.PRINT_FREQ
-            if meet_freq or only_few_batches or self.batch_idx == self.num_batches - 1:
+            if meet_freq or self.batch_idx == self.num_batches - 1:
                 # NOTE: updated to log at end of all batches
                 nb_remain = 0
                 nb_remain += self.num_batches - self.batch_idx - 1
