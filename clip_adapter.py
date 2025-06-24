@@ -23,7 +23,7 @@ from sklearn.metrics import f1_score
 from dassl.utils import load_pretrained_weights, load_checkpoint
 from dassl.optim import build_optimizer, build_lr_scheduler
 
-from losses import build_loss_fn
+from .losses import build_loss_fn
 
 from clip import clip
 from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer

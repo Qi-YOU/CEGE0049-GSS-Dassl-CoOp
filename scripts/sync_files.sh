@@ -22,6 +22,7 @@ declare -A files_to_copy=(
     ["datasets/lighting_condition.yaml"]="CoOp/configs/datasets/lighting_condition.yaml"
     ["datasets/weather.yaml"]="CoOp/configs/datasets/weather.yaml"
     ["clip_adapter.py"]="CoOp/trainers/clip_adapter.py"
+    ["losses.py"]="CoOp/trainers/losses.py"
 )
 
 # Copy files with prompt if target exists
@@ -35,13 +36,12 @@ for src in "${!files_to_copy[@]}"; do
     mkdir -p "$tgt_dir"
 
     if [[ -f "$tgt" ]]; then
-        echo "File $tgt already exists."
-        read -n 1 -s -r -p "Press any key to overwrite, or Ctrl+C to cancel."
-        echo
+        echo "Warning: File $tgt already exists and will be overwritten."
     fi
 
-    cp "$src" "$tgt"
-    echo
+    if ! cp "$src" "$tgt"; then
+        echo "Error: Failed to copy $src to $tgt"
+    fi
 done
 
 echo "All files copied successfully."
