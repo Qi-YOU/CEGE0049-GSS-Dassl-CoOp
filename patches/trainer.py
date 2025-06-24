@@ -8,7 +8,6 @@ This patch updates the training loop in Dassl.Pytorch to ensure consistent handl
 Changes:
 - Log train-set performance at key intervals in the training loop:
   * When current batch index reaches a multiple of PRINT_FREQ.
-  * When the number of batches is fewer than PRINT_FREQ.
   * On the final batch of an epoch.
 
 This fix is especially relevant for custom trainers, logging mechanisms, or distributed setups where `nb_remain` is used
@@ -576,8 +575,8 @@ class TrainerXU(SimpleTrainer):
             losses.update(loss_summary)
 
             meet_freq = (self.batch_idx + 1) % self.cfg.TRAIN.PRINT_FREQ == 0
-            if meet_freq or self.batch_idx == self.num_batches - 1:
-                # NOTE: updated to log at end of all batches
+            only_few_batches = self.num_batches < self.cfg.TRAIN.PRINT_FREQ
+            if meet_freq or only_few_batches:
                 nb_remain = 0
                 nb_remain += self.num_batches - self.batch_idx - 1
                 nb_remain += (
@@ -633,8 +632,8 @@ class TrainerX(SimpleTrainer):
             losses.update(loss_summary)
 
             meet_freq = (self.batch_idx + 1) % self.cfg.TRAIN.PRINT_FREQ == 0
-            only_few_batches = self.num_batches < self.cfg.TRAIN.PRINT_FREQ
-            if meet_freq or only_few_batches:
+            if meet_freq or self.batch_idx == self.num_batches - 1:
+                # NOTE: updated to log at end of all batches
                 nb_remain = 0
                 nb_remain += self.num_batches - self.batch_idx - 1
                 nb_remain += (
