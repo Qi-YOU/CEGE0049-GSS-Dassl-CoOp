@@ -344,7 +344,13 @@ class SimpleTrainer(TrainerBase):
         self.build_data_loader()
         self.build_model()
         self.evaluator = build_evaluator(cfg, lab2cname=self.lab2cname)
-        self.best_result = -np.inf
+        self.best_result = {
+            "accuracy": -np.inf,
+            "error_rate": np.inf,
+            "macro_precision": -np.inf,
+            "macro_recall": -np.inf,
+            "macro_f1": -np.inf
+        }
 
     def check_cfg(self, cfg):
         """Check whether some variables are set correctly for
@@ -449,7 +455,7 @@ class SimpleTrainer(TrainerBase):
 
         if do_test and self.cfg.TEST.FINAL_MODEL == "best_val":
             curr_result = self.test(split="val")
-            is_best = curr_result > self.best_result
+            is_best = curr_result["accuracy"] > self.best_result["accuracy"]
             if is_best:
                 self.best_result = curr_result
                 self.save_model(
@@ -458,6 +464,14 @@ class SimpleTrainer(TrainerBase):
                     val_result=curr_result,
                     model_name="model-best.pth.tar"
                 )
+
+            print(f"epoch [{self.epoch+1}/{self.max_epoch}] "
+                  f"val_acc {curr_result['accuracy']:.2f} "
+                  f"val_err {curr_result['error_rate']:.2f} "
+                  f"val_macro_prec {curr_result['macro_precision']:.2f} "
+                  f"val_macro_rec {curr_result['macro_recall']:.2f} "
+                  f"val_macro_f1 {curr_result['macro_f1']:.2f}"
+            )
 
         if meet_checkpoint_freq or last_epoch:
             self.save_model(self.epoch, self.output_dir)
@@ -490,7 +504,7 @@ class SimpleTrainer(TrainerBase):
             tag = f"{split}/{k}"
             self.write_scalar(tag, v, self.epoch)
 
-        return list(results.values())[0]
+        return results
 
     def model_inference(self, input):
         return self.model(input)
