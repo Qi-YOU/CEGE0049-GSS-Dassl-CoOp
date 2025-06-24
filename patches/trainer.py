@@ -135,7 +135,7 @@ class TrainerBase:
             return names_real
 
     def save_model(
-        self, epoch, directory, is_best=False, val_result=None, model_name=""
+        self, epoch, directory, is_best=False, val_result=None, model_name="", verbose=True
     ):
         names = self.get_model_names()
 
@@ -161,6 +161,7 @@ class TrainerBase:
                 osp.join(directory, name),
                 is_best=is_best,
                 model_name=model_name,
+                verbose=verbose
             )
 
     def resume_model_if_exist(self, directory):
@@ -461,7 +462,8 @@ class SimpleTrainer(TrainerBase):
                     self.epoch,
                     self.output_dir,
                     val_result=curr_result,
-                    model_name="model-best.pth.tar"
+                    model_name="model-best.pth.tar",
+                    verbose=False
                 )
 
             print(f"epoch [{self.epoch+1}/{self.max_epoch}] "
@@ -490,7 +492,7 @@ class SimpleTrainer(TrainerBase):
             split = "test"  # in case val_loader is None
             data_loader = self.test_loader
 
-        if not verbose:
+        if verbose:
             print(f"Evaluate on the *{split}* set")
 
         for batch_idx, batch in enumerate(tqdm(data_loader, disable=not verbose)):
