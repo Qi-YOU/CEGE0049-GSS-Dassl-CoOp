@@ -23,6 +23,8 @@ from sklearn.metrics import f1_score
 from dassl.utils import load_pretrained_weights, load_checkpoint
 from dassl.optim import build_optimizer, build_lr_scheduler
 
+from losses import build_loss_fn
+
 from clip import clip
 from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 
@@ -63,45 +65,6 @@ def load_clip_model(cfg):
     model, preprocess = clip.load(backbone_name, device=device)
     
     return model, device
-
-
-def compute_weights(labels, strategy):
-    """
-    Compute the class weights based on different strategies if specified.
-    """
-    unique_labels, counts = np.unique(labels, return_counts=True)
-    total_samples = len(labels)
-
-    if strategy == "inverse":
-        # Inverse strategy assigns higher weight to classes with fewer samples
-        # Weight for class i = 1 / count[i]
-        weights = 1.0 / torch.tensor(counts, dtype=torch.float)
-
-        # Normalize weights so they sum to 1
-        weights /= weights.sum()
-
-    elif strategy == "uniform":
-        # Uniform strategy tries to make effective sample contribution from each class equal
-        # First compute fraction of each class in the dataset
-        class_fractions = torch.tensor(counts, dtype=torch.float) / total_samples
-
-        # Ideal average weight per class if all were balanced
-        desired_avg_weight = 1.0 / len(unique_labels)
-
-        # Weight for class i = desired_avg_weight / actual_fraction[i]
-        # Classes with fewer samples get higher weight
-        weights = desired_avg_weight / class_fractions
-
-        # Normalize weights so they sum to 1
-        weights /= weights.sum()
-    elif strategy is None or strategy in ["none", "N/A", "default"]:
-        # No weighting applied
-        return None
-    else:
-        raise ValueError(f"Unsupported class weighting strategy: {strategy}")
-    
-    return weights
-
 
 
 class Adapter(nn.Module):
@@ -226,56 +189,12 @@ class CLIP_Adapter(TrainerX):
     """ CLIP-Adapter """
 
     def build_loss(self):
-        """Build and initialize the loss function"""
-        cfg = self.cfg
-        lossname = cfg.TRAINER.LOSS.NAME
-        class_weighting = getattr(cfg.TRAINER.LOSS, "CLASS_WEIGHTING", None)
+        """Build and initialize the loss function using the reusable loss builder"""
 
-        # Compute weights if class weighting is enabled
-        if class_weighting:
-            train_labels = [x.label for x in self.dm.dataset.train_x]
-            weights = compute_weights(train_labels, class_weighting)
-            if weights is not None:
-                weights = weights.to(self.device)
-        else:
-            weights = None
+        # Extract training labels for class weighting or CB loss
+        train_labels = [x.label for x in self.dm.dataset.train_x]
 
-        if lossname == "ce":
-            return nn.CrossEntropyLoss(weight=weights)
-        
-        elif lossname == "focal":
-            gamma = cfg.TRAINER.LOSS.FOCAL_GAMMA
-            alpha = torch.tensor(
-                cfg.TRAINER.LOSS.FOCAL_ALPHA, dtype=torch.float32
-                ).to(self.device) if cfg.TRAINER.LOSS.FOCAL_ALPHA is not None else weights
-
-            class FocalLoss(nn.Module):
-                def __init__(self, gamma=2.0, alpha=None):
-                    super().__init__()
-                    self.gamma = gamma
-                    self.alpha = alpha
-
-                def forward(self, inputs, targets):
-                    log_probs = F.log_softmax(inputs, dim=1)
-                    probs = torch.exp(log_probs)
-                    targets_onehot = F.one_hot(targets, num_classes=inputs.size(1)).float()
-                    pt = (probs * targets_onehot).sum(dim=1)
-
-                    if self.alpha is not None:
-                        alpha_t = self.alpha[targets]
-                        loss = -alpha_t * ((1 - pt) ** self.gamma) * torch.log(pt + 1e-9)
-                    else:
-                        loss = -((1 - pt) ** self.gamma) * torch.log(pt + 1e-9)
-
-                    return loss.mean()
-
-            alpha_tensor = None
-            if alpha is not None:
-                alpha_tensor = torch.tensor(alpha, dtype=torch.float32).to(self.device)
-
-            return FocalLoss(gamma=gamma, alpha=alpha_tensor)
-        else:
-            raise ValueError(f"Unknown loss name: {lossname}")
+        return build_loss_fn(self.cfg, labels=train_labels, device=self.device)
 
     def build_model(self):
         """Build and initialize the CLIP-Adapter model."""
