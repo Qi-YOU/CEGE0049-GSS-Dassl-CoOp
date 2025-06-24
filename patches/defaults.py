@@ -314,7 +314,7 @@ _C.TRAINER.LOSS.NAME = "ce"  # Options: ce, focal, cb
 _C.TRAINER.LOSS.CLASS_WEIGHTING = "default"  # Options: inverse, uniform, or None(none, N/A, default)
 # CE has no additional parameters - `ce`
 # Focal loss parameters - `focal`
-_C.TRAINER.LOSS.FOCAL_GAMMA = 2.0
+_C.TRAINER.LOSS.FOCAL_GAMMA = 2
 _C.TRAINER.LOSS.FOCAL_ALPHA = None  # Optional: list or tensor of class weights
 # Class-Balanced loss parameters - `cb`： TBC
 # _C.TRAINER.LOSS.CB_BETA = 0.999
