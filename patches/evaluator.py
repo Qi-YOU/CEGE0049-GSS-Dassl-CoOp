@@ -83,7 +83,7 @@ class Classification(EvaluatorBase):
                 matches_i = int(matches[i].item())
                 self._per_class_res[label].append(matches_i)
 
-    def evaluate(self):
+    def evaluate(self, verbose=True):
         results = OrderedDict()
         acc = 100.0 * self._correct / self._total
         err = 100.0 - acc
@@ -117,60 +117,61 @@ class Classification(EvaluatorBase):
         results["macro_recall"] = macro_recall
         results["macro_f1"] = macro_f1
 
-        print(
-            "=> result\n"
-            f"* total: {self._total:,}\n"
-            f"* correct: {self._correct:,}\n"
-            f"* accuracy: {acc:.1f}%\n"
-            f"* error: {err:.1f}%\n"
-            f"* macro_precision: {macro_precision:.1f}%\n"
-            f"* macro_recall: {macro_recall:.1f}\n%"
-            f"* macro_f1: {macro_f1:.1f}%"
-        )
+        if verbose:
+            print(
+                "=> result\n"
+                f"* total: {self._total:,}\n"
+                f"* correct: {self._correct:,}\n"
+                f"* accuracy: {acc:.1f}%\n"
+                f"* error: {err:.1f}%\n"
+                f"* macro_precision: {macro_precision:.1f}%\n"
+                f"* macro_recall: {macro_recall:.1f}\n%"
+                f"* macro_f1: {macro_f1:.1f}%"
+            )
 
-        if self._per_class_res is not None:
-            labels = list(self._per_class_res.keys())
-            labels.sort()
+            if self._per_class_res is not None:
+                labels = list(self._per_class_res.keys())
+                labels.sort()
 
-            print("=> per-class result")
-            accs = []
+                print("=> per-class result")
+                accs = []
 
-            for label in labels:
-                classname = self._lab2cname[label]
-                res = self._per_class_res[label]
-                correct = sum(res)
-                total = len(res)
-                acc = 100.0 * correct / total
-                accs.append(acc)
-                print(
-                    f"* class: {label} ({classname})\t"
-                    f"total: {total:,}\t"
-                    f"correct: {correct:,}\t"
-                    f"acc: {acc:.1f}%"
+                for label in labels:
+                    classname = self._lab2cname[label]
+                    res = self._per_class_res[label]
+                    correct = sum(res)
+                    total = len(res)
+                    acc = 100.0 * correct / total
+                    accs.append(acc)
+                    print(
+                        f"* class: {label} ({classname})\t"
+                        f"total: {total:,}\t"
+                        f"correct: {correct:,}\t"
+                        f"acc: {acc:.1f}%"
+                    )
+                mean_acc = np.mean(accs)
+                print(f"* average: {mean_acc:.1f}%")
+
+                results["perclass_accuracy"] = mean_acc
+
+            if self.cfg.TEST.COMPUTE_CMAT:
+                cmat = confusion_matrix(
+                    self._y_true, self._y_pred, normalize="true"
                 )
-            mean_acc = np.mean(accs)
-            print(f"* average: {mean_acc:.1f}%")
-
-            results["perclass_accuracy"] = mean_acc
-
-        if self.cfg.TEST.COMPUTE_CMAT:
-            cmat = confusion_matrix(
-                self._y_true, self._y_pred, normalize="true"
-            )
-            save_path = osp.join(self.cfg.OUTPUT_DIR, "cmat.pt")
-            torch.save(cmat, save_path)
-            print(f"Confusion matrix is saved to {save_path}")
-    
-        if getattr(self.cfg.TEST, "SAVE_REPORT", False):
-            report = classification_report(
-                self._y_true,
-                self._y_pred,
-                target_names=[self._lab2cname[i] for i in sorted(set(self._y_true))],
-                zero_division=0
-            )
-            report_path = osp.join(self.cfg.OUTPUT_DIR, "classification_report.txt")
-            with open(report_path, "w") as f:
-                f.write(report)
-            print(f"Classification report is saved to {report_path}")
+                save_path = osp.join(self.cfg.OUTPUT_DIR, "cmat.pt")
+                torch.save(cmat, save_path)
+                print(f"Confusion matrix is saved to {save_path}")
+        
+            if getattr(self.cfg.TEST, "SAVE_REPORT", False):
+                report = classification_report(
+                    self._y_true,
+                    self._y_pred,
+                    target_names=[self._lab2cname[i] for i in sorted(set(self._y_true))],
+                    zero_division=0
+                )
+                report_path = osp.join(self.cfg.OUTPUT_DIR, "classification_report.txt")
+                with open(report_path, "w") as f:
+                    f.write(report)
+                print(f"Classification report is saved to {report_path}")
 
         return results
