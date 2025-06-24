@@ -181,6 +181,13 @@ cp "$PATCH_DIR/trainer.py" "$DASSL_DIR/dassl/engine/trainer.py" || {
     exit 1
 }
 
+# Patch torchtools.py
+echo "  - Patching torchtools.py to fix checkpoint loading with PyTorch >= 2.6 (weights_only=False)."
+cp "$PATCH_DIR/torchtools.py" "$DASSL_DIR/dassl/utils/torchtools.py" || {
+    echo "ERROR: Failed to patch torchtools.py. Aborting."
+    exit 1
+}
+
 echo "Installing Dassl.pytorch..."
 pip install -r "$DASSL_DIR/requirements.txt"
 pip install -e "$DASSL_DIR"
