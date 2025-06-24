@@ -154,20 +154,30 @@ echo "  Enhancement is applied through patches"
 echo "  for better customized performance"
 
 # Patch lr_scheduler.py
+echo "  - Patching lr_scheduler.py to fix LR scheduler compatibility and behavior."
 cp "$PATCH_DIR/lr_scheduler.py" "$DASSL_DIR/dassl/optim/lr_scheduler.py" || {
     echo "ERROR: Failed to patch lr_scheduler.py. Aborting."
     exit 1
 }
 
 # Patch evaluator.py
+echo "  - Patching evaluator.py to improve evaluation metrics and logging."
 cp "$PATCH_DIR/evaluator.py" "$DASSL_DIR/dassl/evaluation/evaluator.py" || {
     echo "ERROR: Failed to patch evaluator.py. Aborting."
     exit 1
 }
 
-echo "  Patching defaults.py to add new config options for improved evaluation features."
+# Patch defaults.py
+echo "  - Patching defaults.py to add new config options for improved evaluation features."
 cp "$PATCH_DIR/defaults.py" "$DASSL_DIR/dassl/config/defaults.py" || {
     echo "ERROR: Failed to patch defaults.py. Aborting."
+    exit 1
+}
+
+# Patch trainer.py
+echo "  - Patching trainer.py to apply training loop updates and evaluation-related fixes."
+cp "$PATCH_DIR/trainer.py" "$DASSL_DIR/dassl/engine/trainer.py" || {
+    echo "ERROR: Failed to patch trainer.py. Aborting."
     exit 1
 }
 
