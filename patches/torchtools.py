@@ -29,7 +29,8 @@ def save_checkpoint(
     save_dir,
     is_best=False,
     remove_module_from_keys=True,
-    model_name=""
+    model_name="",
+    verbose=True
 ):
     r"""Save checkpoint.
 
@@ -60,7 +61,8 @@ def save_checkpoint(
         model_name = "model.pth.tar-" + str(epoch)
     fpath = osp.join(save_dir, model_name)
     torch.save(state, fpath)
-    print(f"Checkpoint saved to {fpath}")
+    if verbose:
+        print(f"Checkpoint saved to {fpath}")
 
     # save current model name
     checkpoint_file = osp.join(save_dir, "checkpoint")
@@ -71,7 +73,8 @@ def save_checkpoint(
     if is_best:
         best_fpath = osp.join(osp.dirname(fpath), "model-best.pth.tar")
         shutil.copy(fpath, best_fpath)
-        print('Best checkpoint saved to "{}"'.format(best_fpath))
+        if verbose:
+            print('Best checkpoint saved to "{}"'.format(best_fpath))
 
 
 def load_checkpoint(fpath):
