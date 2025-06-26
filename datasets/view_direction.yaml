@@ -1,0 +1,4 @@
+DATASET:
+  NAME: "GlobalStreetScapes_ViewDirection"
+  ROOT: "../autodl-tmp"
+  # NUM_SHOTS: 16

@@ -1,0 +1,4 @@
+DATASET:
+  NAME: "GlobalStreetScapes_PanoramicStatus"
+  ROOT: "../autodl-tmp"
+  # NUM_SHOTS: 16
