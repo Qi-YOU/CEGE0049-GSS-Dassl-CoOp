@@ -50,9 +50,14 @@ CUSTOM_TEMPLATES = {
 
     # GlobalStreetScapes templates:
     # These templates describe street-level photos with specific conditions.
-    "GlobalStreetScapes_Weather": "a photo in {} weather.",
-    "GlobalStreetScapes_Lighting": "a photo taken during {}.", # dawn/dusk -> twilight
-    "GlobalStreetScapes_Glare": "a photo with {}." # yes -> glare; no -> no glare
+    "GlobalStreetScapes_Platform": "a photo taken on {}.",  # e.g. driving/walking/slyching surface, railway, fields, tunnel
+    "GlobalStreetScapes_Weather": "a photo in {} weather.",  # clear, cloudy, rainy, snowy, foggy
+    "GlobalStreetScapes_ViewDirection": "a photo captured {} the road.",  # front/back -> along, side -> across
+    "GlobalStreetScapes_Lighting": "a photo taken during {}.",  # day, night, dawn/dusk -> twilight
+    "GlobalStreetScapes_PanoramicStatus": "a {} photo.",  # true -> panoramic; false -> non-panoramic
+    "GlobalStreetScapes_Quality": "a photo of {} quality.",  # good, slightly poor, very poor
+    "GlobalStreetScapes_Glare": "a photo with {}.",  # yes -> glare; no -> no glare
+    "GlobalStreetScapes_Reflection": "a photo with {}."  # yes -> reflection; no -> no reflection
 }
 
 
@@ -120,6 +125,31 @@ class TextEncoder(nn.Module):
                     normalized.append("glare")
                 elif c_str == "no":
                     normalized.append("no glare")
+                else:
+                    normalized.append(c_str)
+
+            elif name == "GlobalStreetScapes_Reflection":
+                if c_str == "yes":
+                    normalized.append("reflection")
+                elif c_str == "no":
+                    normalized.append("no reflection")
+                else:
+                    normalized.append(c_str)
+
+            elif name == "GlobalStreetScapes_ViewDirection":
+                # front/back -> along, side -> across
+                if c_str in ["front", "back", "front/back", "back/front"]:
+                    normalized.append("along")
+                elif c_str == "side":
+                    normalized.append("across")
+                else:
+                    normalized.append(c_str)
+            elif name == "GlobalStreetScapes_PanoramicStatus":
+                # true -> ""; false -> "non-"
+                if c_str in ["true", "yes", "panoramic"]:
+                    normalized.append("panoramic")
+                elif c_str in ["false", "no", "non-panoramic"]:
+                    normalized.append("non-panoramic")
                 else:
                     normalized.append(c_str)
 
