@@ -289,9 +289,34 @@ class GlobalStreetScapesBase(DatasetBase):
 
 # Subclasses for each attribute
 @DATASET_REGISTRY.register()
+class GlobalStreetScapes_Platform(GlobalStreetScapesBase):
+    """Global Street Scapes - Platform Attribute"""
+    attr_name = "platform"
+
+@DATASET_REGISTRY.register()
 class GlobalStreetScapes_Weather(GlobalStreetScapesBase):
     """Global Street Scapes - Weather Attribute"""
     attr_name = "weather"
+
+@DATASET_REGISTRY.register()
+class GlobalStreetScapes_ViewDirection(GlobalStreetScapesBase):
+    """Global Street Scapes - View Direction Attribute"""
+    attr_name = "view_direction"
+
+@DATASET_REGISTRY.register()
+class GlobalStreetScapes_Lighting(GlobalStreetScapesBase):
+    """Global Street Scapes - Lighting Condition Attribute"""
+    attr_name = "lighting_condition"
+
+@DATASET_REGISTRY.register()
+class GlobalStreetScapes_PanoramicStatus(GlobalStreetScapesBase):
+    """Global Street Scapes - Panoramic Status Attribute"""
+    attr_name = "panoramic_status"
+
+@DATASET_REGISTRY.register()
+class GlobalStreetScapes_Quality(GlobalStreetScapesBase):
+    """Global Street Scapes - Quality Attribute"""
+    attr_name = "quality"
 
 @DATASET_REGISTRY.register()
 class GlobalStreetScapes_Glare(GlobalStreetScapesBase):
@@ -299,6 +324,6 @@ class GlobalStreetScapes_Glare(GlobalStreetScapesBase):
     attr_name = "glare"
 
 @DATASET_REGISTRY.register()
-class GlobalStreetScapes_Lighting(GlobalStreetScapesBase):
-    """Global Street Scapes - Lighting Condition Attribute"""
-    attr_name = "lighting_condition"
+class GlobalStreetScapes_Reflection(GlobalStreetScapesBase):
+    """Global Street Scapes - Reflection Attribute"""
+    attr_name = "reflection"
