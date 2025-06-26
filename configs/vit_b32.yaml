@@ -13,12 +13,11 @@ INPUT:
   TRANSFORMS: ["random_resized_crop", "random_flip", "normalize"]
 
 OPTIM:
-  NAME: "adamw"
-  LR: 3e-4
-  WEIGHT_DECAY: 0.01
+  NAME: "sgd"
+  LR: 0.002
   MAX_EPOCH: 100
   LR_SCHEDULER: "cosine"
-  WARMUP_EPOCH: 10
+  WARMUP_EPOCH: 1
   WARMUP_TYPE: "constant"
   WARMUP_CONS_LR: 1e-5
 
