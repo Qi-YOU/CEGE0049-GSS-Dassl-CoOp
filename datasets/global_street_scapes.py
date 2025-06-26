@@ -84,6 +84,9 @@ class GlobalStreetScapesBase(DatasetBase):
         subsample = cfg.DATASET.SUBSAMPLE_CLASSES
         train, val, test = self.subsample_classes(train, val, test, subsample=subsample)
 
+        # Print dataset statistics
+        self.print_dataset_stats(train, val, test)
+
         # Final dataset assignment
         super().__init__(train_x=train, val=val, test=test)
 
@@ -250,7 +253,39 @@ class GlobalStreetScapesBase(DatasetBase):
 
         # Apply filtering and relabeling for all provided datasets (train/val/test)
         return tuple(filter_and_relabel(data) for data in args)
+    
+    def print_dataset_stats(self, train, val, test):
+        """
+        Print formatted dataset statistics with sample counts and label distribution ratios.
+        """
+        # Format dataset name: replace underscores with space and title-case it
+        class_name = self.__class__.__name__
+        dataset_title = class_name.replace("_", " ").title()
 
+        print(f"Dataset Statistics: {dataset_title}")
+
+        for split_name, split_data in [("Train", train), ("Val", val), ("Test", test)]:
+            class_counts = defaultdict(int)
+            total_samples = len(split_data)
+
+            # Count samples per class
+            for item in split_data:
+                class_counts[item.classname] += 1
+
+            print(f"- {split_name} Set: {total_samples} samples")
+
+            # Determine longest label for alignment
+            if class_counts:
+                max_label_len = max(len(label) for label in class_counts)
+            else:
+                max_label_len = 0
+
+            # Print class counts and percentages
+            for label in sorted(class_counts):
+                count = class_counts[label]
+                ratio = count / total_samples if total_samples > 0 else 0
+                print(f"\t- {label.ljust(max_label_len)} : {count:4d} ({ratio:.2%})")
+        print()
 
 # Subclasses for each attribute
 @DATASET_REGISTRY.register()
