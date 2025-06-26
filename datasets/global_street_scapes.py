@@ -38,7 +38,10 @@ from collections import defaultdict
 from dassl.data.datasets import DATASET_REGISTRY, Datum, DatasetBase
 
 
-SUPPORTED_ATTR_NAMES = ["weather", "glare", "lighting_condition"]
+SUPPORTED_ATTR_NAMES = [
+    "platform", "weather", "view_direction", "lighting_condition",
+    "panoramic_status", "quality", "glare", "reflection"
+]
 
 
 class GlobalStreetScapesBase(DatasetBase):
