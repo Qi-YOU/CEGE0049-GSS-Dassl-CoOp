@@ -8,7 +8,7 @@ SLEEP_TIME=10
 START_TIME=$(date +%s)
 
 # Define datasets and output base dir
-DATASETS=("weather" "glare" "lighting_condition")
+DATASETS=("platform" "weather" "view_direction" "lighting_condition" "panoramic_status" "quality" "glare" "reflection")
 CLASS_WEIGHTINGS=("inverse" "uniform")
 TRAINER="CLIP_Adapter"
 CONFIG_BASE="CoOp/configs"
@@ -17,7 +17,7 @@ TRAINER_CONFIG="configs/vit_b32.yaml"
 for DATASET in "${DATASETS[@]}"; do
   for WEIGHT in "${CLASS_WEIGHTINGS[@]}"; do
     DATASET_CONFIG="${CONFIG_BASE}/datasets/${DATASET}.yaml"
-    OUTPUT_DIR="results/${DATASET}/ca_vitb32_e100_bs256_s${SEED}-${WEIGHT}"
+    OUTPUT_DIR="results/${DATASET}/sgd-vitb32_e100_bs256_s${SEED}-${WEIGHT}"
 
     echo "====================================="
     echo "Training on dataset: $DATASET"
