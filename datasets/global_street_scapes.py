@@ -304,7 +304,7 @@ class GlobalStreetScapes_ViewDirection(GlobalStreetScapesBase):
     attr_name = "view_direction"
 
 @DATASET_REGISTRY.register()
-class GlobalStreetScapes_Lighting(GlobalStreetScapesBase):
+class GlobalStreetScapes_LightingCondition(GlobalStreetScapesBase):
     """Global Street Scapes - Lighting Condition Attribute"""
     attr_name = "lighting_condition"
 

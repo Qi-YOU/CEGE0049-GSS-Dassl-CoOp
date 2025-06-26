@@ -1,4 +1,4 @@
 DATASET:
-  NAME: "GlobalStreetScapes_Lighting"
+  NAME: "GlobalStreetScapes_LightingCondition"
   ROOT: "../autodl-tmp"
   # NUM_SHOTS: 16
