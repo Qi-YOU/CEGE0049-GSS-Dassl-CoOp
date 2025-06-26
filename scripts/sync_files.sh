@@ -18,9 +18,14 @@ fi
 # Define associative array of source → target file paths
 declare -A files_to_copy=(
     ["datasets/global_street_scapes.py"]="CoOp/datasets/global_street_scapes.py"
-    ["datasets/glare.yaml"]="CoOp/configs/datasets/glare.yaml"
-    ["datasets/lighting_condition.yaml"]="CoOp/configs/datasets/lighting_condition.yaml"
+    ["datasets/platform.yaml"]="CoOp/configs/datasets/platform.yaml"
     ["datasets/weather.yaml"]="CoOp/configs/datasets/weather.yaml"
+    ["datasets/view_direction.yaml"]="CoOp/configs/datasets/view_direction.yaml"
+    ["datasets/lighting_condition.yaml"]="CoOp/configs/datasets/lighting_condition.yaml"
+    ["datasets/panoramic_status.yaml"]="CoOp/configs/datasets/panoramic_status.yaml"
+    ["datasets/quality.yaml"]="CoOp/configs/datasets/quality.yaml"
+    ["datasets/glare.yaml"]="CoOp/configs/datasets/glare.yaml"
+    ["datasets/reflection.yaml"]="CoOp/configs/datasets/reflection.yaml"
     ["clip_adapter.py"]="CoOp/trainers/clip_adapter.py"
     ["losses.py"]="CoOp/trainers/losses.py"
 )
