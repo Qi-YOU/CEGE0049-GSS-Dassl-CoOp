@@ -20,14 +20,14 @@ global_street_scapes/
 │   ├── 5/...
 │   ├── 6/...
 │   └── 7/...
-├── train/
-│   ├── weather.csv
+├── train/ (8 csvs in total)
 │   ├── glare.csv
-│   └── lighting_condition.csv
-└── test/
-    ├── weather.csv
+│   ├── ...
+│   └── weather.csv
+└── test/ (8 csvs in total)
     ├── glare.csv
-    └── lighting_condition.csv
+    ├── ...
+    └── weather.csv
 """
 
 import os
