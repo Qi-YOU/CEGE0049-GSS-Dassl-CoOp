@@ -53,7 +53,7 @@ CUSTOM_TEMPLATES = {
     "GlobalStreetScapes_Platform": "a photo taken on {}.",  # e.g. driving/walking/slyching surface, railway, fields, tunnel
     "GlobalStreetScapes_Weather": "a photo in {} weather.",  # clear, cloudy, rainy, snowy, foggy
     "GlobalStreetScapes_ViewDirection": "a photo captured {} the road.",  # front/back -> along, side -> across
-    "GlobalStreetScapes_Lighting": "a photo taken during {}.",  # day, night, dawn/dusk -> twilight
+    "GlobalStreetScapes_LightingCondition": "a photo taken during {}.",  # day, night, dawn/dusk -> twilight
     "GlobalStreetScapes_PanoramicStatus": "a {} photo.",  # true -> panoramic; false -> non-panoramic
     "GlobalStreetScapes_Quality": "a photo of {} quality.",  # good, slightly poor, very poor
     "GlobalStreetScapes_Glare": "a photo with {}.",  # yes -> glare; no -> no glare
@@ -114,7 +114,7 @@ class TextEncoder(nn.Module):
             # Ensure c is a string
             c_str = str(c).replace("_", " ").lower()
 
-            if name == "GlobalStreetScapes_Lighting":
+            if name == "GlobalStreetScapes_LightingCondition":
                 if c_str in ["dawn", "dusk", "dawn/dusk", "dusk/dawn"]:
                     normalized.append("twilight")
                 else:
