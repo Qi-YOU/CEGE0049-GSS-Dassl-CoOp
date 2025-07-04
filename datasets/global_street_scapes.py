@@ -40,7 +40,7 @@ from dassl.data.datasets import DATASET_REGISTRY, Datum, DatasetBase
 
 SUPPORTED_ATTR_NAMES = [
     "platform", "weather", "view_direction", "lighting_condition",
-    "panoramic_status", "quality", "glare", "reflection"
+    "pano_status", "quality", "glare", "reflection"
 ]
 
 
@@ -314,7 +314,7 @@ class GlobalStreetScapes_LightingCondition(GlobalStreetScapesBase):
 @DATASET_REGISTRY.register()
 class GlobalStreetScapes_PanoramicStatus(GlobalStreetScapesBase):
     """Global Street Scapes - Panoramic Status Attribute"""
-    attr_name = "panoramic_status"
+    attr_name = "pano_status"
 
 @DATASET_REGISTRY.register()
 class GlobalStreetScapes_Quality(GlobalStreetScapesBase):
