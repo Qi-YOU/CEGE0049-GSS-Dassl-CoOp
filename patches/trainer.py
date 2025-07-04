@@ -73,6 +73,10 @@ class SimpleNet(nn.Module):
 
         self._fdim = fdim
 
+        self.early_stop_counter = 0
+        self.should_stop = False
+
+
     @property
     def fdim(self):
         return self._fdim
@@ -269,6 +273,11 @@ class TrainerBase:
             self.before_epoch()
             self.run_epoch()
             self.after_epoch()
+
+            if hasattr(self, "should_stop") and self.should_stop:
+                print(f"Stopping early at epoch {self.epoch + 1} with patience of {self.cfg.TRAIN.EARLY_STOPPING_PATIENCE} epochs")
+                break
+
         self.after_train()
 
     def before_train(self):
@@ -456,6 +465,7 @@ class SimpleTrainer(TrainerBase):
         if do_test and self.cfg.TEST.FINAL_MODEL == "best_val":
             curr_result = self.test(split="val", verbose=False)
             is_best = curr_result["accuracy"] > self.best_result["accuracy"]
+
             if is_best:
                 self.best_result = curr_result
                 self.save_model(
@@ -465,6 +475,10 @@ class SimpleTrainer(TrainerBase):
                     model_name="model-best.pth.tar",
                     verbose=False
                 )
+                self.early_stop_counter = 0  # Reset patience counter
+            else:
+                if self.cfg.TRAIN.EARLY_STOPPING:
+                    self.early_stop_counter += 1
 
             print(f"epoch [{self.epoch+1}/{self.max_epoch}] "
                   f"val_acc {curr_result['accuracy']:.2f} "
@@ -476,6 +490,11 @@ class SimpleTrainer(TrainerBase):
 
         if meet_checkpoint_freq or last_epoch:
             self.save_model(self.epoch, self.output_dir)
+
+        # Trigger early stopping
+        if self.cfg.TRAIN.EARLY_STOPPING and self.early_stop_counter >= self.cfg.TRAIN.EARLY_STOPPING_PATIENCE:
+            print("Early stopping triggered.")
+            self.should_stop = True
 
     @torch.no_grad()
     def test(self, split=None, verbose=True):
