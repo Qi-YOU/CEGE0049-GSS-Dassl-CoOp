@@ -196,6 +196,10 @@ _C.TRAIN.PRINT_FREQ = 10
 # Use 'train_x', 'train_u' or 'smaller_one' to count
 # the number of iterations in an epoch (for DA and SSL)
 _C.TRAIN.COUNT_ITER = "train_x"
+# Enable early stopping based on validation accuracy
+_C.TRAIN.EARLY_STOPPING = True
+# Number of epochs to wait for improvement before stopping
+_C.TRAIN.EARLY_STOPPING_PATIENCE = 10
 
 ###########################
 # Test
