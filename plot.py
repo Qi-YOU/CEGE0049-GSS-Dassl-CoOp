@@ -16,23 +16,28 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 
 # Define mapping dict
-weather_map = {
-    "clear": 0,
-    "cloudy": 1,
-    "foggy": 2,
-    "rainy": 3,
-    "snowy": 4
+glare_map = {"no": 0, "yes": 1}
+panoramic_status_map = {"false": 0, "true": 1}
+lighting_condition_map = {"day": 0, "dusk/dawn": 1, "night": 2}
+weather_map = {"clear": 0, "cloudy": 1, "foggy": 2, "rainy": 3, "snowy": 4}
+platform_map = {
+    "cycling surface": 0, "driving surface": 1, "fields": 2,
+    "railway": 3, "tunnel": 4, "walking surface": 5
 }
+quality_map = {"good": 0, "slightly poor": 1, "very poor": 2}
+reflection_map = {"no": 0, "yes": 1}
+view_direction_map = {"front/back": 0, "side": 1}
 
-lighting_condition_map = {
-    "day": 0,
-    "dusk/dawn": 1,
-    "night": 2
-}
-
-glare_map = {
-    "no": 0,
-    "yes": 1
+mapping_dict = {
+    "glare": glare_map,
+    "panoramic_status": panoramic_status_map,
+    "pano_status": panoramic_status_map,  # alias
+    "lighting_condition": lighting_condition_map,
+    "weather": weather_map,
+    "platform": platform_map,
+    "quality": quality_map,
+    "reflection": reflection_map,
+    "view_direction": view_direction_map,
 }
 
 
@@ -42,20 +47,14 @@ def get_labels_by_dataset(dataset_name):
 
     Args:
         dataset_name (str): Name of the dataset. Expected values include
-            "weather", "lighting_condition", "glare" (case-insensitive).
+            "weather", "lighting_condition", "glare", "quality",
+            "reflection", "view_direction", "panoramic_status", "pano_status" (case-insensitive).
 
     Returns:
         list or None: A list of class label strings if the dataset is recognized,
             otherwise None.
     """
-    if dataset_name.lower() == "weather":
-        return weather_map
-    elif dataset_name.lower() == "lighting_condition":
-        return lighting_condition_map
-    elif dataset_name.lower() == "glare":
-        return glare_map
-    else:
-        return None
+    return mapping_dict.get(dataset_name.lower())
 
 
 def find_latest_log(logs):
@@ -87,64 +86,111 @@ def parse_log_file(log_path):
             - epoch_data (dict): {epoch: {'loss': float, 'acc': float}}
             - lr_data (dict): {epoch: {'lr_float': float, 'lr_str': str}}
     """
-    epoch_last_line = {}
+    acc_loss_dict = {}
+    lr_dict = {}
 
     with open(log_path, "r") as f:
-        for line in f:
-            # Regex matches lines containing epoch, loss, accuracy, and learning rate info
-            m = re.search(
-                r"epoch \[(\d+)/\d+\].*loss [\d\.]+ \(([\d\.]+)\).*acc [\d\.]+ \(([\d\.]+)\).*lr ([\deE\+\-\.]+)",
-                line)
-            if m:
-                epoch = int(m.group(1))
-                loss = float(m.group(2))
-                acc = float(m.group(3))
-                lr_str = m.group(4)
-                lr = float(lr_str)
-                # Store the last matched line per epoch (assumes latest info is last line of epoch)
-                epoch_last_line[epoch] = (loss, acc, lr_str, lr)
+        lines = f.readlines()
 
-    epoch_data = {}
-    lr_data = {}
-    for e in sorted(epoch_last_line.keys()):
-        loss, acc, lr_str, lr = epoch_last_line[e]
-        epoch_data[e] = {"loss": loss, "acc": acc}
-        lr_data[e] = {"lr_float": lr, "lr_str": lr_str}
+    epoch_to_last_batch = {}
 
-    return epoch_data, lr_data
+    for line in lines:
+        # Match a batch log line
+        batch_match = re.match(
+            r"epoch \[(\d+)/\d+\] batch \[(\d+)/(\d+)\].*?loss [\d.]+ \(([\d.]+)\) acc [\d.]+ \(([\d.]+)\) f1 [\d.]+ \(([\d.]+)\) lr ([\d.eE+-]+)",
+            line
+        )
+        if batch_match:
+            epoch = int(batch_match.group(1))
+            batch_idx = int(batch_match.group(2))
+            total_batches = int(batch_match.group(3))
+
+            # Always track the last batch (highest batch_idx) for each epoch
+            if epoch not in epoch_to_last_batch or batch_idx > epoch_to_last_batch[epoch]["batch_idx"]:
+                epoch_to_last_batch[epoch] = {
+                    "batch_idx": batch_idx,
+                    "loss": float(batch_match.group(4)),
+                    "acc": float(batch_match.group(5)),
+                    "f1": float(batch_match.group(6)),
+                    "lr": float(batch_match.group(7)),
+                }
+            continue
+
+        # Match a val line
+        val_match = re.match(
+            r"epoch \[(\d+)/\d+\] val_acc ([\d.]+) val_err [\d.]+ val_macro_prec [\d.]+ val_macro_rec [\d.]+ val_macro_f1 ([\d.]+)",
+            line
+        )
+        if val_match:
+            epoch = int(val_match.group(1))
+            val_acc = float(val_match.group(2))
+            val_f1 = float(val_match.group(3))
+
+            if epoch not in acc_loss_dict:
+                acc_loss_dict[epoch] = {}
+
+            acc_loss_dict[epoch]["val_acc"] = val_acc
+            acc_loss_dict[epoch]["val_f1"] = val_f1
+
+    # Merge training and lr info into acc_loss_dict
+    for epoch, batch_info in epoch_to_last_batch.items():
+        if epoch not in acc_loss_dict:
+            acc_loss_dict[epoch] = {}
+        acc_loss_dict[epoch]["train_loss"] = batch_info["loss"]
+        acc_loss_dict[epoch]["train_acc"] = batch_info["acc"]
+        acc_loss_dict[epoch]["train_f1"] = batch_info["f1"]
+        lr_dict[epoch] = {
+            "lr_float": batch_info["lr"],
+            "lr_str": f"{batch_info['lr']:.2e}"
+        }
+
+    return acc_loss_dict, lr_dict
 
 
 def plot_learning_curve(acc_loss_dict, dataset_name, experiment_name, results_root):
     """
     Plot and save the learning curve of the training loss and accuracy curve over epochs.
-
     Args:
-        acc_loss_dict (dict): {epoch: {'loss': float, 'acc': float}}
+        acc_loss_dict (dict): 
+            {epoch: {
+                'train_loss': float,
+                'train_acc': float,
+                'train_f1': float,
+                'val_acc': float,
+                'val_f1': float
+            }}
         dataset_name (str): Dataset name (used for title and save path).
         experiment_name (str): Experiment name (used for save path).
         results_root (str): Root directory for saving plots.
     """
     epochs = list(acc_loss_dict.keys())
-    losses = [acc_loss_dict[e]["loss"] for e in epochs]
-    accs = [acc_loss_dict[e]["acc"] for e in epochs]
+    train_losses = [acc_loss_dict[e].get("train_loss", None) for e in epochs]
+    train_accs = [acc_loss_dict[e].get("train_acc", None) for e in epochs]
+    train_f1s = [acc_loss_dict[e].get("train_f1", None) for e in epochs]
+    val_accs = [acc_loss_dict[e].get("val_acc", None) for e in epochs]
+    val_f1s = [acc_loss_dict[e].get("val_f1", None) for e in epochs]
 
-    fig, ax1 = plt.subplots(figsize=(6, 4))
+    fig, ax1 = plt.subplots(figsize=(7, 5))
     ax1.set_xlabel("Epoch")
-    ax1.set_ylabel("Average Loss", color="tab:red", fontsize=14)
-    l1, = ax1.plot(epochs, losses, color="tab:red", label="Avg Loss", linewidth=2)
+    ax1.set_ylabel("Loss", color="tab:red", fontsize=14)
+    l1, = ax1.plot(epochs, train_losses, color="tab:red", label="Train Loss", linewidth=2)
     ax1.tick_params(axis="y", labelcolor="tab:red", labelsize=12)
     ax1.tick_params(axis="x", labelsize=12)
 
     ax2 = ax1.twinx()
-    ax2.set_ylabel("Average Accuracy (%)", color="tab:blue", fontsize=14)
-    l2, = ax2.plot(epochs, accs, color="tab:blue", label="Avg Acc", linewidth=2)
-    ax2.tick_params(axis="y", labelcolor="tab:blue", labelsize=12)
+    ax2.set_ylabel("Metric (%)", color="#008080", fontsize=14)
+    l2, = ax2.plot(epochs, train_accs, color="#add8e6", label="Train Acc", linewidth=2, linestyle="-")
+    l3, = ax2.plot(epochs, train_f1s, color="#90ee90", label="Train F1", linewidth=2, linestyle="--")
+    l4, = ax2.plot(epochs, val_accs, color="tab:blue", label="Val Acc", linewidth=2, linestyle="-")
+    l5, = ax2.plot(epochs, val_f1s, color="tab:green", label="Val F1", linewidth=2, linestyle="--")
+    ax2.tick_params(axis="y", labelcolor="#008080", labelsize=12)
 
-    lines = [l1, l2]
+    # Legend: Train Loss, Train Acc & Val Acc, Train F1, Val F1
+    lines = [l1, l2, l4, l3, l5]
     labels = [line.get_label() for line in lines]
     ax1.legend(lines, labels, loc="lower right", bbox_to_anchor=(1.0, 0.075), fontsize=12)
 
-    plt.title(f"Training Curve: {dataset_name.replace('_', ' ').title()}", fontsize=14)
+    plt.title(f"Learning Curve: {dataset_name.replace('_', ' ').title()}", fontsize=14)
     fig.tight_layout()
 
     save_dir = os.path.join(results_root, dataset_name, experiment_name)
@@ -156,9 +202,9 @@ def plot_learning_curve(acc_loss_dict, dataset_name, experiment_name, results_ro
     plt.close()
 
 
-def plot_lr_curve(lr_dict, dataset_name, experiment_name, results_root):
+def plot_learning_schedule(lr_dict, dataset_name, experiment_name, results_root):
     """
-    Plot and save the learning rate curve over epochs on a logarithmic scale.
+    Plot and save the learning schedule curve over epochs on a logarithmic scale.
 
     Args:
         lr_dict (dict): {epoch: {'lr_float': float, 'lr_str': str}}
@@ -170,21 +216,21 @@ def plot_lr_curve(lr_dict, dataset_name, experiment_name, results_root):
     lrs = [lr_dict[e]["lr_float"] for e in epochs]
 
     fig, ax = plt.subplots(figsize=(6, 4))
-    ax.plot(epochs, lrs, label="Learning Rate", color="tab:green", linewidth=2)
+    ax.plot(epochs, lrs, label="Learning Schedule", color="tab:orange", linewidth=2)
     ax.set_yscale("log")
 
     ax.set_xlabel("Epoch", fontsize=14)
-    ax.set_ylabel("Learning Rate (log scale)", fontsize=14)
+    ax.set_ylabel("Learning Schedule (log scale)", fontsize=14)
     ax.tick_params(axis="both", labelsize=12)
 
     ax.legend(loc="upper right", fontsize=12)
-    plt.title(f"Learning Rate Curve: {dataset_name.replace('_', ' ').title()}", fontsize=14)
+    plt.title(f"Learning Schedule Curve: {dataset_name.replace('_', ' ').title()}", fontsize=14)
 
     fig.tight_layout()
 
     save_dir = os.path.join(results_root, dataset_name, experiment_name)
     os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, f"lr_curve-{dataset_name}-{experiment_name}.png")
+    save_path = os.path.join(save_dir, f"learning_schedule-{dataset_name}-{experiment_name}.png")
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
 
@@ -295,7 +341,7 @@ def main(results_root="results"):
         plot_learning_curve(acc_loss_dict, dataset_name, experiment_name, results_root)
 
         # Plot and save the learning rate curve for this experiment
-        plot_lr_curve(lr_dict, dataset_name, experiment_name, results_root)
+        plot_learning_schedule(lr_dict, dataset_name, experiment_name, results_root)
 
         # Plot and save the confusion matrix visualization if the file exists
         cmat_path = os.path.join(experiment_path, "cmat.pt")
