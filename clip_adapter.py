@@ -270,7 +270,7 @@ class CustomCLIP(nn.Module):
 
 
     def _hook_fn(self, module, input, output):
-        self.features['tokens'] = output  # [B, N+1, C]
+        self.features['tokens'] = output.permute(1, 0, 2)  # [N+1, B, C] -> [B, N+1, C]
 
             
     def forward(self, image):
