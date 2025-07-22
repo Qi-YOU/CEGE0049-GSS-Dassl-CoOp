@@ -42,12 +42,22 @@ for src in "${!files_to_copy[@]}"; do
     mkdir -p "$tgt_dir"
 
     if [[ -f "$tgt" ]]; then
-        echo "Warning: File $tgt already exists and will be overwritten."
+        src_hash=$(sha256sum "$src" | cut -d' ' -f1)
+        tgt_hash=$(sha256sum "$tgt" | cut -d' ' -f1)
+        if [[ "$src_hash" == "$tgt_hash" ]]; then
+            echo "  Info: $tgt is identical to $src (sha256sum match). Skipping copy."
+            continue
+        else
+            echo "  Warning: $tgt exists and differs from $src. Overwriting."
+        fi
+    else
+        echo "  Note: $tgt does not exist. Copying new file."
     fi
 
     if ! cp "$src" "$tgt"; then
-        echo "Error: Failed to copy $src to $tgt"
+        echo "  Error: Failed to copy $src to $tgt"
     fi
 done
 
+echo ""
 echo "All files copied successfully."
