@@ -24,7 +24,7 @@ from dassl.utils import load_pretrained_weights, load_checkpoint
 from dassl.optim import build_optimizer, build_lr_scheduler
 
 from .loss import build_loss_fn
-from .attn import CBAM
+from .attn import CBAM, MaxViTBlock
 
 from clip import clip
 from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
@@ -87,11 +87,11 @@ class Adapter(nn.Module):
             nn.Linear(bottleneck_dim, output_dim),
             nn.ReLU(inplace=True)
         )
-        self.cbam = CBAM(output_dim) 
+        self.block = MaxViTBlock(output_dim) 
 
     def forward(self, x):  # x: [B, N, C]
         x = self.proj(x)
-        x = self.cbam(x)
+        x = self.block(x)
         x = x.mean(dim=1)  # x: [B, C]
         return x
     
