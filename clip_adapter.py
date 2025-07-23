@@ -221,18 +221,18 @@ class CustomCLIP(nn.Module):
         self.features.clear()
 
         # Forward image through CLIP's visual encoder
-        x = self.image_encoder(image.type(self.dtype))
+        image_features = self.image_encoder(image.type(self.dtype))
 
        # Use hook to extract patch tokens from penultimate layer
         tokens = self.features['tokens']  # [B, N+1, C]
         patch_tokens = tokens[:, 1:, :]  # remove CLS
 
         # Pass patch tokens through Adapter (MLP + CBAM)
-        adapted = self.adapter(patch_tokens)  # [B, N, C']
+        x = self.adapter(patch_tokens)  # [B, N, C']
 
         # Linearly blend the original and adapted features
         ratio = 0.2
-        image_features = ratio * x + (1 - ratio) * adapted
+        image_features = ratio * x + (1 - ratio) * image_features
 
         # Encode text features
         text_features = self.text_encoder()
