@@ -125,7 +125,7 @@ class Classification(EvaluatorBase):
                 f"* accuracy: {acc:.1f}%\n"
                 f"* error: {err:.1f}%\n"
                 f"* macro_precision: {macro_precision:.1f}%\n"
-                f"* macro_recall: {macro_recall:.1f}\n%"
+                f"* macro_recall: {macro_recall:.1f}%\n"
                 f"* macro_f1: {macro_f1:.1f}%"
             )
 
