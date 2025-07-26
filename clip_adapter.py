@@ -331,10 +331,11 @@ class CLIP_Adapter(TrainerX):
         label = label.to(self.device)
         return input, label
     
-    def load_model(self, directory, epoch=None):
+    def load_model(self, directory, epoch=None, weight_only=False):
         """
         Load model checkpoint from a directory. If epoch is not specified,
-        loads the best model.
+        loads the best model. Exact matching of `state_dict` is required
+        by specifying weight_only=False since PyTorch 2.6.
         """
         if not directory:
             print("Note that load_model() is skipped as no pretrained model is given")
@@ -369,3 +370,16 @@ class CLIP_Adapter(TrainerX):
 
             # Allow partial loading by setting strict=False
             self._models[name].load_state_dict(state_dict, strict=False)
+
+    def count_parameters(self, only_trainable=True):
+        """
+        Count the number of (trainable) parameters in the model in millions.
+        """
+        model = self.model.adapter  # Only adapter is trainable
+        if only_trainable:
+            params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        else:
+            params = sum(p.numel() for p in model.parameters())
+
+        return f"{params / 1e6:.2f}M"
+
