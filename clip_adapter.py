@@ -10,6 +10,7 @@ https://github.com/gaopengcuhk/CLIP-Adapter
 """
 
 import os.path as osp
+import warnings
 
 import torch
 import torch.nn as nn
@@ -206,6 +207,17 @@ class CustomCLIP(nn.Module):
             bottleneck_dim=bottleneck_dim
         ).to(self.dtype)
 
+        # Set blend_ratio with default value 0.2 if not in cfg
+        self.blend_ratio = cfg.MODEL.BLEND_RATIO if hasattr(cfg.MODEL, 'BLEND_RATIO') else 0.2
+
+        # Validate blend ratio range
+        assert 0 < self.blend_ratio < 1, f"blend_ratio must be between 0 and 1, got {self.blend_ratio}"
+        
+        # Warn about extreme values
+        if self.blend_ratio < 0.2:
+            warnings.warn(f"Using small blend_ratio ({self.blend_ratio}), adapter features will have minimal impact")
+        elif self.blend_ratio > 0.8:
+            warnings.warn(f"Using large blend_ratio ({self.blend_ratio}), original CLIP features will have minimal impact")
 
         # Register hook for patch tokens
         self.features = {}
@@ -231,8 +243,7 @@ class CustomCLIP(nn.Module):
         x = self.adapter(patch_tokens)  # [B, N, C']
 
         # Linearly blend the original and adapted features
-        ratio = 0.2
-        image_features = ratio * x + (1 - ratio) * image_features
+        image_features = self.blend_ratio * x + (1 - self.blend_ratio) * image_features
 
         # Encode text features
         text_features = self.text_encoder()

@@ -143,6 +143,8 @@ _C.MODEL.HEAD.HIDDEN_LAYERS = ()
 _C.MODEL.HEAD.ACTIVATION = "relu"
 _C.MODEL.HEAD.BN = True
 _C.MODEL.HEAD.DROPOUT = 0.0
+# Blend ratio for adapter features
+_C.MODEL.BLEND_RATIO = 0.2
 
 ###########################
 # Optimization
