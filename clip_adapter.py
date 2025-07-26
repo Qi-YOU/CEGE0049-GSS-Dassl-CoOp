@@ -290,6 +290,8 @@ class CLIP_Adapter(TrainerX):
 
         self.register_model("clip_adapter",
                             self.model.adapter, self.optim, self.sched)
+        
+        print(f"Trainable Parameters: {self.count_parameters()}")
 
     def forward_backward(self, batch):
         """
