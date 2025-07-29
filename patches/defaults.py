@@ -203,6 +203,25 @@ _C.TRAIN.EARLY_STOPPING = True
 # Number of epochs to wait for improvement before stopping
 _C.TRAIN.EARLY_STOPPING_PATIENCE = 10
 
+
+###########################
+# Attention Adapter Config
+###########################
+_C.ATTENTION = CN()
+# Max sequence length for position embedding and attention mask
+_C.ATTENTION.MAX_LEN = 196
+# Number of attention heads
+_C.ATTENTION.NUM_HEADS = 4
+# Window size for local attention
+_C.ATTENTION.WINDOW_SIZE = 3
+# Whether to use learnable positional embeddings
+_C.ATTENTION.USE_POS_EMBED = False
+# Whether to apply LayerNorm after projection
+_C.ATTENTION.USE_LAYER_NORM = False
+# Whether to apply local attention mask (True = windowed attention, False = global)
+_C.ATTENTION.USE_ATTN_MASK = False
+
+
 ###########################
 # Test
 ###########################
