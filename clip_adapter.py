@@ -77,24 +77,91 @@ def load_clip_model(cfg):
 class Adapter(nn.Module):
     """
     A lightweight Adapter module that projects image features through
-    a small bottleneck MLP followed by a convolutional block attention module(CBAM)
-    to allow fine-tuning with minimal parameters.
+    a small bottleneck MLP followed by multi-head attention,
+    with learnable positional encoding added to the input features.
+    Fixed-sized windowed local self-attention is available by specifying use_attn_mask=True.
     """
-    def __init__(self, input_dim, output_dim, bottleneck_dim):
+    def __init__(self, input_dim, output_dim, bottleneck_dim,
+                 max_len=196, num_heads=4, window_size=3,
+                 use_pos_embed=False, use_layer_norm=False, use_attn_mask=False):
         super(Adapter, self).__init__()
+
+        # Learnable positional embeddings added *before* projection if specified
+        if use_pos_embed:
+            # Shape: [1, max_len, input_dim] to match input channel dimension
+            self.pos_embed = nn.Parameter(torch.randn(1, max_len, input_dim))
+        else:
+            self.pos_embed = None
+
+        self.max_len = max_len
+        self.cached_attn_mask = None
+        self.window_size = window_size
+        self.use_attn_mask = use_attn_mask
+
+        # Bottleneck projection MLP: input_dim -> bottleneck_dim -> output_dim
         self.proj = nn.Sequential(
             nn.Linear(input_dim, bottleneck_dim),
             nn.ReLU(inplace=True),
             nn.Linear(bottleneck_dim, output_dim),
             nn.ReLU(inplace=True)
         )
-        self.block = MaxViTBlock(output_dim) 
+
+        # LayerNorm normalizes the output_dim features per token
+        if use_layer_norm:
+            self.norm = nn.LayerNorm(output_dim)
+        else:
+            self.norm = None
+
+        # Multi-head self-attention
+        assert output_dim % num_heads == 0, f"output_dim ({output_dim}) must be divisible by num_heads ({num_heads})"
+        self.attn = nn.MultiheadAttention(output_dim, num_heads=num_heads, batch_first=True)
+
+        # Dropout for regularization
+        self.dropout = nn.Dropout(0.1)
+
+    def _build_attn_mask(self, seq_len, device):
+        """
+        Construct a local attention mask with fixed window size.
+        """
+        mask = torch.full((seq_len, seq_len), float("-inf"), device=device)
+        for i in range(seq_len):
+            start = max(0, i - self.window_size)
+            end = min(seq_len, i + self.window_size + 1)
+            mask[i, start:end] = 0
+        return mask
 
     def forward(self, x):  # x: [B, N, C]
-        x = self.proj(x)
-        x = self.block(x)
-        x = x.mean(dim=1)  # x: [B, C]
-        return x
+        B, N, C = x.size()
+
+        # Add learnable positional embeddings to input tokens
+        # Slice positional embeddings if input length N < max_len
+        if self.pos_embed is not None:
+            x = x + self.pos_embed[:, :N, :]
+
+        # Pass through bottleneck projection MLP
+        x = self.proj(x)  # [B, N, output_dim]
+
+        # Normalize projected features
+        if self.norm is not None:
+            x = self.norm(x)
+
+        # Apply multi-head self-attention: query, key, value all = x
+        x, _ = self.attn(x, x, x)
+        if self.use_attn_mask:
+            # Cache mask to avoid repeated construction
+            if self.cached_attn_mask is None or self.cached_attn_mask.size(0) < N:
+                self.cached_attn_mask = self._build_attn_mask(self.max_len, x.device)
+            attn_mask = self.cached_attn_mask[:N, :N]
+            x, _ = self.attn(x, x, x, attn_mask=attn_mask)
+        else:
+            # Directly use global attention with no mask
+            x, _ = self.attn(x, x, x)
+
+        # Apply dropout for regularization
+        x = self.dropout(x)
+
+        # Aggregate token features by mean pooling over sequence length dimension
+        return x.mean(dim=1)  # [B, output_dim]
     
     
 class TextEncoder(nn.Module):
@@ -204,7 +271,13 @@ class CustomCLIP(nn.Module):
         self.adapter = Adapter(
             input_dim=input_dim,
             output_dim=output_dim,
-            bottleneck_dim=bottleneck_dim
+            bottleneck_dim=bottleneck_dim,
+            max_len=getattr(cfg.ATTENTION, "MAX_LEN", 196),
+            num_heads=getattr(cfg.ATTENTION, "NUM_HEADS", 4),
+            window_size=getattr(cfg.ATTENTION, "WINDOW_SIZE", 3),
+            use_pos_embed=getattr(cfg.ATTENTION, "USE_POS_EMBED", False),
+            use_layer_norm=getattr(cfg.ATTENTION, "USE_LAYER_NORM", False),
+            use_attn_mask=getattr(cfg.ATTENTION, "USE_ATTN_MASK", False)
         ).to(self.dtype)
 
         # Set blend_ratio with default value 0.2 if not in cfg
