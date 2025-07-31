@@ -145,6 +145,8 @@ _C.MODEL.HEAD.BN = True
 _C.MODEL.HEAD.DROPOUT = 0.0
 # Blend ratio for adapter features
 _C.MODEL.BLEND_RATIO = 0.2
+# Number of attention heads used in the adapter's MultiheadAttention
+_C.MODEL.NUM_HEADS = 4
 
 ###########################
 # Optimization
