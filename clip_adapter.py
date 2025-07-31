@@ -76,25 +76,30 @@ def load_clip_model(cfg):
 
 class Adapter(nn.Module):
     """
-    A lightweight Adapter module that projects image features through
-    a small bottleneck MLP followed by a convolutional block attention module(CBAM)
-    to allow fine-tuning with minimal parameters.
+    A lightweight Adapter module that refines image features via a bottleneck MLP 
+    followed by a multi-head self-attention module, enabling efficient fine-tuning
+    with minimal additional parameters. 
     """
-    def __init__(self, input_dim, output_dim, bottleneck_dim):
+    def __init__(self, input_dim, output_dim, bottleneck_dim, num_heads=4):
         super(Adapter, self).__init__()
+        assert output_dim % num_heads == 0, \
+            f"output_dim ({output_dim}) must be divisible by num_heads ({num_heads})"
         self.proj = nn.Sequential(
             nn.Linear(input_dim, bottleneck_dim),
             nn.ReLU(inplace=True),
             nn.Linear(bottleneck_dim, output_dim),
             nn.ReLU(inplace=True)
         )
-        self.block = MaxViTBlock(output_dim) 
+        self.norm = nn.LayerNorm(output_dim)
+        self.attn = nn.MultiheadAttention(output_dim, num_heads=num_heads, batch_first=True)
+        self.dropout = nn.Dropout(0.1)
 
     def forward(self, x):  # x: [B, N, C]
         x = self.proj(x)
-        x = self.block(x)
-        x = x.mean(dim=1)  # x: [B, C]
-        return x
+        x = self.norm(x)
+        x, _ = self.attn(x, x, x)
+        x = self.dropout(x)
+        return x.mean(dim=1) # x: [B, C]
     
     
 class TextEncoder(nn.Module):
@@ -204,7 +209,8 @@ class CustomCLIP(nn.Module):
         self.adapter = Adapter(
             input_dim=input_dim,
             output_dim=output_dim,
-            bottleneck_dim=bottleneck_dim
+            bottleneck_dim=bottleneck_dim,
+            num_heads=cfg.MODEL.NUM_HEADS if hasattr(cfg.MODEL, 'NUM_HEADS') else 4
         ).to(self.dtype)
 
         # Set blend_ratio with default value 0.2 if not in cfg
