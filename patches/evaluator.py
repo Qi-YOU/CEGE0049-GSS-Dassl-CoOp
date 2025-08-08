@@ -11,10 +11,7 @@ Changes:
 - Saves a detailed classification report using sklearn.metrics.classification_report.
 - Report is saved to OUTPUT_DIR/classification_report.txt if TEST.SAVE_CLASS_REPORT is True.
 - Retains original accuracy, error, and macro F1 metrics for consistency.
-
-Author: Qi YOU
 """
-
 
 import numpy as np
 import os.path as osp

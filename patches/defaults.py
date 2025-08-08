@@ -1,3 +1,10 @@
+"""
+Default configuration definitions using YACS.
+Defines the base config node with default parameters for model, training, and dataset settings.
+YACS documentation: https://github.com/rbgirshick/yacs
+"""
+
+
 from yacs.config import CfgNode as CN
 
 ###########################

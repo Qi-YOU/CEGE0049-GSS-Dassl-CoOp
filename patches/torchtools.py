@@ -1,6 +1,10 @@
 """
 Modified from https://github.com/KaiyangZhou/deep-person-reid
+
+Patch applied to torchtools.py to fix checkpoint loading issues with PyTorch version 2.6 and above, 
+specifically addressing the behavior when `weights_only=False`.
 """
+
 import pickle
 import shutil
 import os.path as osp

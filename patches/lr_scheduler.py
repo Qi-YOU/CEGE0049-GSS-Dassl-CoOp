@@ -16,8 +16,6 @@ Reference:
 
 This patch ensures that learning rate schedulers such as ConstantWarmupScheduler and LinearWarmupScheduler
 continue to function under the updated PyTorch behavior.
-
-Author: Qi YOU
 """
 import torch
 from torch.optim.lr_scheduler import _LRScheduler

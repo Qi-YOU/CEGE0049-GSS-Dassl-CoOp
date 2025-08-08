@@ -12,10 +12,7 @@ Changes:
 
 This fix is especially relevant for custom trainers, logging mechanisms, or distributed setups where `nb_remain` is used
 for tracking training progress or triggering adaptive logic.
-
-Author: Qi YOU
 """
-
 
 import time
 import numpy as np
