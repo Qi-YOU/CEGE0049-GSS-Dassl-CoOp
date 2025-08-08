@@ -4,7 +4,7 @@ CLIP Adapter with enhanced textual prompt templates for improved dataset alignme
 This module follows the original CLIP-Adapter design by Gao Peng 
 (https://github.com/gaopengcuhk/CLIP-Adapter) with minimal architectural changes. 
 The main enhancement is the use of customized textual prompt templates tailored to 
-each dataset, including detailed natural language prompts for GlobalStreetScapes attributes.
+each dataset, including detailed natural language prompts for GlobalStreetScapes attributes. Also input dimension is changed from 1024 to 512 to suit ViT-B/16 backbone design.
 
 These prompt customizations aim to normalize and contextualize class names for more 
 effective language-vision alignment, enabling fair and consistent evaluation across 
@@ -191,7 +191,7 @@ class CustomCLIP(nn.Module):
         self.text_encoder = TextEncoder(cfg, classnames, clip_model)
         self.logit_scale = clip_model.logit_scale
         self.dtype = clip_model.dtype
-        self.adapter = Adapter(1024, 4).to(clip_model.dtype)
+        self.adapter = Adapter(512, 4).to(clip_model.dtype)
 
             
     def forward(self, image):
