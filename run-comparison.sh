@@ -14,7 +14,7 @@ function run_experiment() {
   local trainer=$1
   local dataset=$2
   local config=$3
-  local loss=${4:-"ce"}
+  local loss=${4:-""}
   local class_weight=${5:-""}
   local blend_ratio=${6:-""}
   local num_heads=${7:-""}
@@ -49,6 +49,9 @@ function run_experiment() {
   fi
   if [[ -n "$num_heads" ]]; then
     outdir+="-mh${num_heads}"
+  fi
+  if [[ -n "$seed" ]]; then
+    outdir+="-sd${seed}"
   fi
 
   # --------------------------------------------
