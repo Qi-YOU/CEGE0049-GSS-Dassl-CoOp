@@ -39,19 +39,19 @@ function run_experiment() {
   # local outdir="../autodl-tmp/results/${dataset}/${trainer}-clip-vitb16"
 
   if [[ -n "$loss" ]]; then
-    outdir+="-loss${loss}"
+    outdir+="-loss_${loss}"
   fi
   if [[ -n "$class_weight" ]]; then
-    outdir+="-cw${class_weight}"
+    outdir+="-cw_${class_weight}"
   fi
   if [[ -n "$blend_ratio" ]]; then
-    outdir+="-br${blend_tag}"
+    outdir+="-br_${blend_tag}"
   fi
   if [[ -n "$num_heads" ]]; then
-    outdir+="-mh${num_heads}"
+    outdir+="-mh_${num_heads}"
   fi
   if [[ -n "$seed" ]]; then
-    outdir+="-sd${seed}"
+    outdir+="-sd_${seed}"
   fi
 
   # --------------------------------------------
