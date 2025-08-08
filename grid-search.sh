@@ -23,12 +23,12 @@ function run_experiment() {
   # For Windows users (uncomment this line and comment the Linux one)
   # local outdir="../autodl-tmp/results/${dataset}/clip-vitb16-mh_${num_heads}-${loss}-${class_weight}-br_${blend_tag}"
 
-  echo "Running ${dataset} with CLIP Adapter + Multihead Attention Heads #=${num_heads}..."
+  echo "Running ${dataset} with CLIP MHAdapter + Multihead Attention Heads #=${num_heads}..."
   echo "=== Loss: ${loss} | Weighting: ${class_weight} | Blend: ${blend_ratio} | Num_heads: ${num_heads} | Config: ${config} ==="
   local start_time=$(date +%s)
 
   local cmd="python CoOp/train.py \
-    --trainer CLIP_Adapter \
+    --trainer CLIP_MHAdapter \
     --dataset-config-file CoOp/configs/datasets/${dataset}.yaml \
     --config-file configs/${config}.yaml \
     --output-dir ${outdir} \
