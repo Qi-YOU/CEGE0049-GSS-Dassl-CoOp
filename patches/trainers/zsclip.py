@@ -27,9 +27,7 @@ CUSTOM_TEMPLATES = {
     "ImageNetA": "a photo of a {}.",
     "ImageNetR": "a photo of a {}.",
 
-    """
-    Modified with minimal changes to support GlobalStreetScapes datasets.  
-    """
+    # Modified with minimal changes to support GlobalStreetScapes datasets.
     # GlobalStreetScapes templates:
     # These templates describe street-level photos with specific conditions.
     "GlobalStreetScapes_Platform": "a photo taken on {}.",  # e.g. driving/walking/slyching surface, railway, fields, tunnel
