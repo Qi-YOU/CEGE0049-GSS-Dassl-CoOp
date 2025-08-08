@@ -27,6 +27,9 @@ declare -A files_to_copy=(
     ["datasets/quality.yaml"]="CoOp/configs/datasets/quality.yaml"
     ["datasets/glare.yaml"]="CoOp/configs/datasets/glare.yaml"
     ["datasets/reflection.yaml"]="CoOp/configs/datasets/reflection.yaml"
+
+    # CoOp's train.py
+    ["patches/train.py"]="CoOp/train.py"
     
     # Baseline models
     ["baselines/clip_adapter.py"]="CoOp/trainers/clip_adapter.py"
