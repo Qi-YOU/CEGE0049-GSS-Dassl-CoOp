@@ -1,12 +1,18 @@
 """
-Refactored CLIP-Adapter implementation with enhanced flexibility for expansion.
+CLIP-MHAdapter: A flexible and efficient adaptation framework inspired by CLIP-Adapter.
 
-This module is a refactored and extended version of the original CLIP-Adapter
-project by Gao Peng (https://github.com/gaopengcuhk/CLIP-Adapter), designed to
-support additional datasets and more flexible hardware usage.
+This module implements a novel adaptation method based on the original CLIP-Adapter 
+concept by Gao Peng (https://github.com/gaopengcuhk/CLIP-Adapter), extended to support 
+fine-grained street-view image attribute classification with enhanced flexibility 
+and efficiency.
 
-Original source repository:
-https://github.com/gaopengcuhk/CLIP-Adapter
+Our design freezes the CLIP backbone and introduces a lightweight bottleneck MLP 
+combined with multi-head self-attention on patch-level features, enabling better 
+modeling of spatial relationships while reducing computation and memory costs. 
+This implementation supports diverse datasets and hardware configurations, 
+facilitating scalable and accurate urban image analysis.
+
+Original inspiration: https://github.com/gaopengcuhk/CLIP-Adapter
 """
 
 import os.path as osp
@@ -24,8 +30,8 @@ from sklearn.metrics import f1_score
 from dassl.utils import load_pretrained_weights, load_checkpoint
 from dassl.optim import build_optimizer, build_lr_scheduler
 
-from .loss import build_loss_fn
-from .attn import CBAM, MaxViTBlock
+from .utils.loss import build_loss_fn
+# from .utils.attn import CBAM, MaxViTBlock
 
 from clip import clip
 from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
@@ -266,8 +272,8 @@ class CustomCLIP(nn.Module):
 
 
 @TRAINER_REGISTRY.register()
-class CLIP_Adapter(TrainerX):
-    """ CLIP-Adapter """
+class CLIP_MHAdapter(TrainerX):
+    """ CLIP-MHAdapter """
 
     def build_loss(self):
         """Build and initialize the loss function using the reusable loss builder"""
@@ -278,7 +284,7 @@ class CLIP_Adapter(TrainerX):
         return build_loss_fn(self.cfg, labels=train_labels, device=self.device)
 
     def build_model(self):
-        """Build and initialize the CLIP-Adapter model."""
+        """Build and initialize the CLIP-MHAdapter model."""
         cfg = self.cfg
         classnames = self.dm.dataset.classnames
 
@@ -305,7 +311,7 @@ class CLIP_Adapter(TrainerX):
         self.optim = build_optimizer(self.model.adapter, cfg.OPTIM)
         self.sched = build_lr_scheduler(self.optim, cfg.OPTIM)
 
-        self.register_model("clip_adapter",
+        self.register_model("clip_mhadapter",
                             self.model.adapter, self.optim, self.sched)
         
         print(f"Trainable Parameters: {self.count_parameters()}")
