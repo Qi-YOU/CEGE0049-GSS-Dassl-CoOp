@@ -1,3 +1,10 @@
+"""
+Loss function registry for modular and extensible loss implementations.
+
+Provides a decorator `register_loss` to register loss functions by name
+into the LOSS_REGISTRY dictionary for easy lookup and usage.
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -1,19 +1,11 @@
 """
-Attention modules for CLIP-based adaptation, including:
-- **CBAM** (Convolutional Block Attention Module) [1]:
-    Simple attention module of channel/spatial attention for CNNs.
-- **Multi-Axis Attention** [2]: #TODO: Implementation
-    Hybrid local/global attention for vision transformers.  
-
-This module implements attention mechanisms to enhance spatial and channel-wise feature
-adaptation in CLIP-based models. Designed for compatibility with CLIP's vision encoders.
+Attention modules for CLIP-based adaptation designed for compatibility with CLIP's vision encoders.
+NOTE: Currently not in usage.
 
 References:
 [1] Woo, S., Park, J., Lee, J. Y., & Kweon, I. S. (2018). Cbam: Convolutional block attention module. In Proceedings of the European conference on computer vision (ECCV) (pp. 3-19).
 [2] Tu, Z., Talebi, H., Zhang, H., Yang, F., Milanfar, P., Bovik, A., & Li, Y. (2022, October). Maxvit: Multi-axis vision transformer. In European conference on computer vision (pp. 459-479). Cham: Springer Nature Switzerland.
-
 """
-
 
 import torch
 import torch.nn as nn
