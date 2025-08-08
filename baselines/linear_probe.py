@@ -1,3 +1,18 @@
+"""
+Linear Probe for evaluating pretrained CLIP visual backbones via a simple linear classifier.
+
+This module implements a standard linear probe training setup where a linear 
+classification head is trained on frozen visual features extracted from a 
+pretrained backbone. It serves as a baseline for assessing the quality of 
+learned representations without fine-tuning the backbone itself.
+
+The design follows conventional protocols widely used in representation learning research, 
+such as in the seminal works on self-supervised learning and supervised pretraining.
+
+Inspiration: https://github.com/openai/CLIP
+Reference: Radford, Alec, et al. "Learning transferable visual models from natural language supervision." International conference on machine learning. PmLR, 2021.
+"""
+
 import os.path as osp
 
 import torch

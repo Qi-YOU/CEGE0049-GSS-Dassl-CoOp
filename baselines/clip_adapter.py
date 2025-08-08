@@ -10,7 +10,8 @@ These prompt customizations aim to normalize and contextualize class names for m
 effective language-vision alignment, enabling fair and consistent evaluation across 
 different datasets without modifying the visual backbone or adapter architecture.
 
-Original inspiration: https://github.com/gaopengcuhk/CLIP-Adapter
+Inspiration: https://github.com/gaopengcuhk/CLIP-Adapter
+Reference: Gao, Peng, et al. "Clip-adapter: Better vision-language models with feature adapters." International Journal of Computer Vision 132.2 (2024): 581-595.
 """
 
 import os.path as osp
