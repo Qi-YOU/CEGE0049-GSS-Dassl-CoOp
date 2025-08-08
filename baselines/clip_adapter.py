@@ -1,14 +1,7 @@
 """
-CLIP Adapter with enhanced textual prompt templates for improved dataset alignment.
-
-This module follows the original CLIP-Adapter design by Gao Peng 
-(https://github.com/gaopengcuhk/CLIP-Adapter) with minimal architectural changes. 
-The main enhancement is the use of customized textual prompt templates tailored to 
-each dataset, including detailed natural language prompts for GlobalStreetScapes attributes. Also input dimension is changed from 1024 to 512 to suit ViT-B/16 backbone design.
-
-These prompt customizations aim to normalize and contextualize class names for more 
-effective language-vision alignment, enabling fair and consistent evaluation across 
-different datasets without modifying the visual backbone or adapter architecture.
+CLIP Adapter with dataset-specific textual prompt templates for improved vision-language alignment. 
+Based on Gao et al. (CLIP-Adapter, 2024) with minimal changes: tailored natural language prompts 
+(GlobalStreetScapes attributes), optional class-weighted loss, and ViT-B/16 input dim adjustment (1024->512), and enhances contextualization of class names without altering the visual backbone or core adapter design.
 
 Inspiration: https://github.com/gaopengcuhk/CLIP-Adapter
 Reference: Gao, Peng, et al. "Clip-adapter: Better vision-language models with feature adapters." International Journal of Computer Vision 132.2 (2024): 581-595.
@@ -22,8 +15,12 @@ from torch.nn import functional as F
 
 from dassl.engine import TRAINER_REGISTRY, TrainerX
 from dassl.metrics import compute_accuracy
+from sklearn.metrics import f1_score
 from dassl.utils import load_pretrained_weights, load_checkpoint
 from dassl.optim import build_optimizer, build_lr_scheduler
+
+from .utils.loss import build_loss_fn
+# from .utils.attn import CBAM, MaxViTBlock
 
 from clip import clip
 from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
@@ -214,6 +211,14 @@ class CustomCLIP(nn.Module):
 class CLIP_Adapter(TrainerX):
     """ CLIP-Adapter """
 
+    def build_loss(self):
+        """Build and initialize the loss function using the reusable loss builder"""
+
+        # Extract training labels for class weighting or CB loss
+        train_labels = [x.label for x in self.dm.dataset.train_x]
+
+        return build_loss_fn(self.cfg, labels=train_labels, device=self.device)
+
     def build_model(self):
         cfg = self.cfg
         classnames = self.dm.dataset.classnames
@@ -235,11 +240,12 @@ class CLIP_Adapter(TrainerX):
 
         
         self.model.to(self.device)
+        self.loss_fn = self.build_loss()
+
         # NOTE: only give text_encoder.adapter to the optimizer
         self.optim = build_optimizer(self.model.adapter, cfg.OPTIM)
         self.sched = build_lr_scheduler(self.optim, cfg.OPTIM)
         
-
         self.register_model('clip_adapter', self.model.adapter, self.optim, self.sched)
 
         device_count = torch.cuda.device_count()
@@ -250,12 +256,20 @@ class CLIP_Adapter(TrainerX):
     def forward_backward(self, batch):
         image, label = self.parse_batch_train(batch)
         output = self.model(image)
-        loss = F.cross_entropy(output, label)
+        loss = self.loss_fn(output, label)
         self.model_backward_and_update(loss)
+
+        # Convert tensors to CPU numpy arrays for metric calculation
+        output_cpu = output.detach().cpu().numpy()
+        label_cpu = label.detach().cpu().numpy()
+
+        # For F1 score, we need to convert probabilities to predicted class indices
+        preds = output_cpu.argmax(axis=1)
 
         loss_summary = {
             'loss': loss.item(),
-            'acc': compute_accuracy(output, label)[0].item()
+            'acc': compute_accuracy(output, label)[0].item(),
+            'f1': f1_score(label_cpu, preds, average="macro", zero_division=0) * 100
         }
 
         if (self.batch_idx + 1) == self.num_batches:
