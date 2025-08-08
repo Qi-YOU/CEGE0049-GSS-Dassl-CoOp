@@ -3,6 +3,7 @@
 # Run a grid search to find the best hyperparameter combination for CLIP MHAdapter.
 # Loops over datasets and parameter ranges (loss, class weight, blend ratio, num_heads)
 # using run_experiment(), logs results, and outputs a summary for analysis.
+# NOTE: This script performs a limited search and does not cover the entire hyperparameter space.
 
 # === Summary log setup ===
 summary_file="train_summary.txt"
