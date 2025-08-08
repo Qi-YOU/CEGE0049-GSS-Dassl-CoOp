@@ -17,6 +17,7 @@ fi
 
 # Define associative array of source → target file paths
 declare -A files_to_copy=(
+    # Dataset configurations
     ["datasets/global_street_scapes.py"]="CoOp/datasets/global_street_scapes.py"
     ["datasets/platform.yaml"]="CoOp/configs/datasets/platform.yaml"
     ["datasets/weather.yaml"]="CoOp/configs/datasets/weather.yaml"
@@ -26,9 +27,21 @@ declare -A files_to_copy=(
     ["datasets/quality.yaml"]="CoOp/configs/datasets/quality.yaml"
     ["datasets/glare.yaml"]="CoOp/configs/datasets/glare.yaml"
     ["datasets/reflection.yaml"]="CoOp/configs/datasets/reflection.yaml"
-    ["clip_adapter.py"]="CoOp/trainers/clip_adapter.py"
-    ["loss.py"]="CoOp/trainers/loss.py"
-    ["attn.py"]="CoOp/trainers/attn.py"
+    
+    # Baseline models
+    ["baselines/clip_adapter.py"]="CoOp/trainers/clip_adapter.py"
+    ["baselines/linear_probe.py"]="CoOp/trainers/linear_probe.py"
+
+    # The proposed model 
+    ["clip_mhadapter.py"]="CoOp/trainers/clip_mhadapter.py"
+
+    # Modified Zero-Shot CLIP with classname normalization for GlobalStreetScapes
+    ["patches/trainers/zsclip.py"]="CoOp/trainers/zsclip.py"
+
+    # Utils
+    ["utils/loss.py"]="CoOp/trainers/utils/loss.py"
+    ["utils/attn.py"]="CoOp/trainers/utils/attn.py"
+    ["utils/__init__.py"]="CoOp/trainers/utils/__init__.py"
 )
 
 # Copy files with prompt if target exists
