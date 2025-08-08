@@ -1,4 +1,5 @@
 #!/bin/bash
+# Sets up a Conda virtual environment with required dependencies.
 
 # Ensure conda commands work in non-interactive shell
 source "$(conda info --base)/etc/profile.d/conda.sh"

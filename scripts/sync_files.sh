@@ -1,4 +1,5 @@
 #!/bin/bash
+# Synchronizes files for CoOp and Dassl projects to maintain customized workflow.
 
 # Run as: scripts/sync_files.sh
 
