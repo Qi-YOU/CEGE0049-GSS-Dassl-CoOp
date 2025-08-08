@@ -176,3 +176,5 @@ for dataset in "${datasets[@]}"; do
         ;;
 
     esac  # <----- this closes the case statement
+  done
+done
