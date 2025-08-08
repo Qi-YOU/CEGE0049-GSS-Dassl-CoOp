@@ -31,8 +31,9 @@ import trainers.cocoop
 import trainers.zsclip
 
 # Customized trainer imports
-import trainers.clip_adapter, clip_mhadapter
 import trainers.linear_probe
+import trainers.clip_adapter
+import trainers.clip_mhadapter
 
 
 def print_args(args, cfg):
