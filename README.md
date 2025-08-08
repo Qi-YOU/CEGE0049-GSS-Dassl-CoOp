@@ -1,4 +1,4 @@
-# CEGE0049-GSS-Dassl-CoOp
+# CLIP-MHAdapter: Parameter-Efficient Multi-Head Self-Attention Adapter for Street-View Image Classification
 
 This repository contains the MSc Research project for CEGE0049, focused on global street scene classification using CLIP-based few-shot learning frameworks such as Dassl and CoOp. The goal is to classify scene conditions (weather, glare, and lighting) from street-level images with the dataset Global Streetscapes (Published: https://doi.org/10.1016/j.isprsjprs.2024.06.023), leveraging vision-language models.
 
@@ -8,7 +8,7 @@ This repository depends on:
 - `CLIP` A vision-language model (VLM) from OpenAI used for aligning images and text in a shared embedding space.
 - `Dassl.pytorch` A domain adaptation and generalization framework built on PyTorch, provides training infrastructure.
 - `CoOp` A method built on top of CLIP for few-shot learning using prompt tuning.
-- `Hugging Face Hub` Used to download datasets directly through its API.
+- `Hugging Face Hub` Used to download datasets directly through its API if required.
 
 ## Installations
 
@@ -76,14 +76,29 @@ If you encounter errors while installing packages, please double-check your netw
 
 This script may prompt you to press a key to continue at certain steps, giving you a moment to review your system status before proceeding.
 
-### 3. Download Dataset
+### 3. Download & Prepare Dataset
+Please follow the instructions on the official dataset repository wiki:
+https://huggingface.co/datasets/NUS-UAL/global-streetscapes
+
+The following directories has to be downloaded:
+```
+manual_labels/ (approx. 23 GB)
+├── train/
+│   └── 8 CSV files with manual labels for contextual attributes 
+├── test/
+│   └── 8 CSV files with manual labels for contextual attributes 
+└── img/
+    └── 7 tar.gz files containing images for training and testing
+```
+Place these directories under `../autodl-tmp` and rename dir name `manual_labels` to `global_street_scapes`.
+
+**Important:**
+- After downloading the 7 .tar.gz files in the img/ directory, make sure to extract each archive.
+- Extraction will create folders named 1/ through 7/, each containing images in .jpeg format.
+- The full dataset, after extraction, may occupy 20-30 GB of disk space.
 
 
-### 4. Dassl-CoOp Style Dataset
-A folder under `$DATA` is created named `global_street_scapes`.
-
-The result directory structure should look like:
-
+Once correctly downloaded and prepared, the result directory structure should look like:
 ```
 global_street_scapes/
 ├── img/
@@ -97,22 +112,20 @@ global_street_scapes/
 │   ├── 6/
 │   └── 7/
 ├── train/
-│   ├── weather.csv
 │   ├── glare.csv
-│   └── lighting_condition.csv
+│   ├── ...
+│   └── weather.csv
 └── test/
-    ├── weather.csv
     ├── glare.csv
-    └── lighting_condition.csv
+    ├── ...
+    └── weather.csv
 
 ```
 
 where each diretory named after `1` to `7` contains images in `.jpeg` format.
 
-TBC.
-
-### 5. Sync Project Files to CoOp
-Before running the CoOp pipeline, make sure required files are correctly placed across dependencies like CoOp/, CLIP/, etc.
+### 4. Sync Project Files to CoOp
+Before running the execution pipeline that utilizes CoOp, make sure required files are correctly placed across dependencies like CoOp/, CLIP/, etc.
 
 - For Linux/macOS:
     ```bash
@@ -132,4 +145,4 @@ Before running the CoOp pipeline, make sure required files are correctly placed 
     bash scripts/sync_files.sh
     ```
 
-This script verifies the working directory and copies necessary files into appropriate submodules. If a file already exists, you'll be prompted to continue by press any key or cancel with Ctrl+C.
+This script verifies the working directory and copies necessary files into appropriate submodules.
