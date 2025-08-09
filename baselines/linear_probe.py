@@ -25,8 +25,10 @@ from dassl.metrics import compute_accuracy
 from dassl.utils import load_pretrained_weights, load_checkpoint
 from dassl.optim import build_optimizer, build_lr_scheduler
 
-from clip import clip
+from .utils.loss import build_loss_fn
+# from .utils.attn import CBAM, MaxViTBlock
 
+from clip import clip
 
 def load_clip_to_cpu(cfg):
     backbone_name = cfg.MODEL.BACKBONE.NAME
@@ -74,6 +76,14 @@ class LinearProbeCLIP(nn.Module):
 class Linear_Probe(TrainerX):
     """Linear probe on top of frozen CLIP image features."""
 
+    def build_loss(self):
+        """Build and initialize the loss function using the reusable loss builder"""
+
+        # Extract training labels for class weighting or CB loss
+        train_labels = [x.label for x in self.dm.dataset.train_x]
+
+        return build_loss_fn(self.cfg, labels=train_labels, device=self.device)
+
     def build_model(self):
         cfg = self.cfg
         classnames = self.dm.dataset.classnames
@@ -97,6 +107,8 @@ class Linear_Probe(TrainerX):
             load_pretrained_weights(self.model.classifier, cfg.MODEL.INIT_WEIGHTS)
 
         self.model.to(self.device)
+        self.loss_fn = self.build_loss()
+
         # optimizer only for classifier
         self.optim = build_optimizer(self.model.classifier, cfg.OPTIM)
         self.sched = build_lr_scheduler(self.optim, cfg.OPTIM)
@@ -116,14 +128,14 @@ class Linear_Probe(TrainerX):
         if prec == "amp":
             with autocast():
                 output = self.model(image)
-                loss = F.cross_entropy(output, label)
+                loss = self.loss_fn(output, label)
             self.optim.zero_grad()
             self.scaler.scale(loss).backward()
             self.scaler.step(self.optim)
             self.scaler.update()
         else:
             output = self.model(image)
-            loss = F.cross_entropy(output, label)
+            loss = self.loss_fn(output, label)
             self.model_backward_and_update(loss)
 
         loss_summary = {
