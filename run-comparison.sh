@@ -5,7 +5,7 @@
 # produces a summary for side-by-side evaluation.
 
 # ======= Summary log setup =======
-summary_file="results/comparison_summary.txt"
+summary_file="comparison_summary.txt"
 echo "======== TRAINING SUMMARY ========" > "$summary_file"
 echo "Start time: $(date)" >> "$summary_file"
 echo "" >> "$summary_file"
@@ -119,7 +119,7 @@ function run_experiment() {
 
 # Pre-defined pass-in arguments
 datasets=("glare" "lighting_condition" "pano_status" "platform" "quality" "reflection" "view_direction" "weather")
-class_weights=("default" "inverse" "uniform")
+class_weights=("inverse" "uniform")
 trainers_order=("ZeroshotCLIP" "Linear_Probe" "CoOp" "CLIP_Adapter" "CLIP_MHAdapter")
 
 # Dataset-specific optimal parameters for CLIP_MHAdapter, determined through
@@ -155,7 +155,13 @@ for dataset in "${datasets[@]}"; do
         run_experiment "$trainer" "$dataset" "$config" "" "" "" "" "$seed" "--eval-only"
         ;;
 
-      "Linear_Probe"|"CoOp")
+      "Linear_Probe")
+        for cw in "${class_weights[@]}"; do
+          run_experiment "$trainer" "$dataset" "$config" "ce" "$cw" "" "" "$seed"
+        done
+        ;;
+
+      "CoOp")
         run_experiment "$trainer" "$dataset" "$config" "" "" "" "" "$seed"
         ;;
 
