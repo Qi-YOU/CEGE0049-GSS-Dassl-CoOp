@@ -35,6 +35,7 @@ declare -A files_to_copy=(
     # Baseline models
     ["baselines/clip_adapter.py"]="CoOp/trainers/clip_adapter.py"
     ["baselines/linear_probe.py"]="CoOp/trainers/linear_probe.py"
+    ["baselines/zero_rule.py"]="CoOp/trainers/zero_rule.py"
 
     # The proposed model 
     ["clip_mhadapter.py"]="CoOp/trainers/clip_mhadapter.py"
