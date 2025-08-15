@@ -35,6 +35,7 @@ import trainers.cocoop
 import trainers.zsclip
 
 # Customized trainer imports
+import trainers.zero_rule
 import trainers.linear_probe
 import trainers.clip_adapter
 import trainers.clip_mhadapter
