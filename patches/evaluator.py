@@ -4,20 +4,21 @@ Modified from https://github.com/KaiyangZhou/deep-person-reid & https://github.c
 Enhancement: Improved Classification Evaluator
 ----------------------------------------------
 This enhancement extends the default classification evaluator by adding support for 
-precision, recall, and full per-class performance reporting.
+precision, recall, F1, balanced accuracy, and full per-class performance reporting.
 
 Changes:
-- Computes and prints macro-averaged precision and recall.
-- Saves a detailed classification report using sklearn.metrics.classification_report.
-- Report is saved to OUTPUT_DIR/classification_report.txt if TEST.SAVE_CLASS_REPORT is True.
-- Retains original accuracy, error, and macro F1 metrics for consistency.
+- Computes macro & weighted precision, recall, F1, and balanced accuracy.
+- Prints metrics and saves them to CSV (classification_metrics.csv).
+- Saves detailed classification report if config TEST.SAVE_REPORT is True.
+- Retains original accuracy, error, and per-class metrics.
 """
 
 import numpy as np
 import os.path as osp
 from collections import OrderedDict, defaultdict
+import csv
 import torch
-from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix, classification_report
+from sklearn.metrics import balanced_accuracy_score, f1_score, precision_score, recall_score, confusion_matrix, classification_report
 
 
 from .build import EVALUATOR_REGISTRY
@@ -85,6 +86,7 @@ class Classification(EvaluatorBase):
         acc = 100.0 * self._correct / self._total
         err = 100.0 - acc
 
+        # Macro metrics
         macro_precision = 100.0 * precision_score(
             self._y_true,
             self._y_pred,
@@ -107,12 +109,47 @@ class Classification(EvaluatorBase):
             zero_division=0
         )
 
-        # The first value will be returned by trainer.test()
-        results["accuracy"] = acc
-        results["error_rate"] = err
-        results["macro_precision"] = macro_precision
-        results["macro_recall"] = macro_recall
-        results["macro_f1"] = macro_f1
+        # Weighted metrics
+        weighted_precision = 100.0 * precision_score(
+            self._y_true,
+            self._y_pred,
+            average="weighted",
+            labels=np.unique(self._y_true),
+            zero_division=0
+        )
+        weighted_recall = 100.0 * recall_score(
+            self._y_true,
+            self._y_pred,
+            average="weighted",
+            labels=np.unique(self._y_true),
+            zero_division=0
+        )
+        weighted_f1 = 100.0 * f1_score(
+            self._y_true,
+            self._y_pred,
+            average="weighted",
+            labels=np.unique(self._y_true),
+            zero_division=0
+        )
+
+        # Balanced accuracy
+        balanced_acc = 100.0 * balanced_accuracy_score(
+            self._y_true,
+            self._y_pred,
+            adjusted=True)
+
+        # Collect metrics in results dict
+        results.update({
+            "accuracy": acc,
+            "error_rate": err,
+            "macro_precision": macro_precision,
+            "macro_recall": macro_recall,
+            "macro_f1": macro_f1,
+            "weighted_precision": weighted_precision,
+            "weighted_recall": weighted_recall,
+            "weighted_f1": weighted_f1,
+            "balanced_accuracy": balanced_acc
+        })
 
         if verbose:
             print(
@@ -123,7 +160,11 @@ class Classification(EvaluatorBase):
                 f"* error: {err:.1f}%\n"
                 f"* macro_precision: {macro_precision:.1f}%\n"
                 f"* macro_recall: {macro_recall:.1f}%\n"
-                f"* macro_f1: {macro_f1:.1f}%"
+                f"* macro_f1: {macro_f1:.1f}%\n"
+                f"* weighted_precision: {weighted_precision:.1f}%\n"
+                f"* weighted_recall: {weighted_recall:.1f}%\n"
+                f"* weighted_f1: {weighted_f1:.1f}%\n"
+                f"* balanced_accuracy: {balanced_acc:.1f}%"
             )
 
             if self._per_class_res is not None:
@@ -160,6 +201,7 @@ class Classification(EvaluatorBase):
                 print(f"Confusion matrix is saved to {save_path}")
         
             if getattr(self.cfg.TEST, "SAVE_REPORT", False):
+                # Generate and save the sklearn's classification report
                 report = classification_report(
                     self._y_true,
                     self._y_pred,
@@ -170,5 +212,14 @@ class Classification(EvaluatorBase):
                 with open(report_path, "w") as f:
                     f.write(report)
                 print(f"Classification report is saved to {report_path}")
+
+                # Generate and save the CSV
+                csv_path = osp.join(self.cfg.OUTPUT_DIR, "classification_metrics.csv")
+                with open(csv_path, "w", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(list(results.keys()))
+                    writer.writerow([f"{v:.2f}" if isinstance(v, float) else v for v in results.values()])
+                print(f"Metrics CSV saved to {csv_path}")
+
 
         return results
