@@ -129,7 +129,7 @@ function run_experiment() {
 # Pre-defined pass-in arguments
 datasets=("glare" "lighting_condition" "pano_status" "platform" "quality" "reflection" "view_direction" "weather")
 class_weights=("inverse" "uniform")
-trainers_order=("CoOp")
+trainers_order=("ZeroR_Trainer" "ZeroshotCLIP" "Linear_Probe" "CoOp" "CLIP_Adapter" "CLIP_MHAdapter")
 
 # Dataset-specific optimal parameters for CLIP_MHAdapter, determined through
 # comprehensive grid search analysis with best macro f1-score performance (via run-grid-search.sh)
