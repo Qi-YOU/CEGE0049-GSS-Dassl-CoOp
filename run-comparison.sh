@@ -5,7 +5,10 @@
 # produces a summary for side-by-side evaluation.
 
 # ======= Summary log setup =======
-summary_file="comparison_summary.txt"
+# For Linux users (uncomment this line and comment the Windows one)
+summary_file="/root/autodl-tmp/results/comparison_summary.txt"
+# For Windows users (uncomment this line and comment the Linux one)
+# summary_file="../autodl-tmp/results/comparison_summary.txt"
 echo "======== TRAINING SUMMARY ========" > "$summary_file"
 echo "Start time: $(date)" >> "$summary_file"
 echo "" >> "$summary_file"
@@ -19,7 +22,7 @@ function run_experiment() {
   local blend_ratio=${6:-""}
   local num_heads=${7:-""}
   local seed=${8:-42}
-  local extra_args=${9:-""}   # <-- holds things like "--eval-only"
+  local extra_args=${9:-""}   # <-- holds things like "--eval-only" or "TRAINER.COOP.N_CTX 8"
 
   local blend_tag=""
   if [[ -n "$blend_ratio" ]]; then
@@ -52,6 +55,12 @@ function run_experiment() {
   fi
   if [[ -n "$seed" ]]; then
     outdir+="-sd_${seed}"
+  fi
+
+  # ---- Detect n_ctx from extra_args if present ----
+  if [[ "$extra_args" =~ TRAINER\.COOP\.N_CTX[[:space:]]+([0-9]+) ]]; then
+    n_ctx_val="${BASH_REMATCH[1]}"
+    outdir+="-n_ctx_${n_ctx_val}"
   fi
 
   # --------------------------------------------
@@ -120,19 +129,19 @@ function run_experiment() {
 # Pre-defined pass-in arguments
 datasets=("glare" "lighting_condition" "pano_status" "platform" "quality" "reflection" "view_direction" "weather")
 class_weights=("inverse" "uniform")
-trainers_order=("ZeroshotCLIP" "Linear_Probe" "CoOp" "CLIP_Adapter" "CLIP_MHAdapter")
+trainers_order=("CoOp")
 
 # Dataset-specific optimal parameters for CLIP_MHAdapter, determined through
-# comprehensive grid search analysis (via run-grid-search.sh)
+# comprehensive grid search analysis with best macro f1-score performance (via run-grid-search.sh)
 declare -A mhadapter_params
-mhadapter_params["glare"]="ce uniform 0.8 16"
-mhadapter_params["lighting_condition"]="ce uniform 0.8 8"
+mhadapter_params["glare"]="ce uniform 0.8 4"
+mhadapter_params["lighting_condition"]="ce inverse 0.8 8"
 mhadapter_params["pano_status"]="ce uniform 0.2 4"
 mhadapter_params["platform"]="ce uniform 0.8 4"
-mhadapter_params["quality"]="ce uniform 0.8 4"
-mhadapter_params["reflection"]="ce uniform 0.8 8"
-mhadapter_params["view_direction"]="ce uniform 0.8 4"
-mhadapter_params["weather"]="ce inverse 0.8 16"
+mhadapter_params["quality"]="ce inverse 0.2 16"
+mhadapter_params["reflection"]="ce inverse 0.8 8"
+mhadapter_params["view_direction"]="ce inverse 0.8 4"
+mhadapter_params["weather"]="ce uniform 0.2 8"
 
 # Iterate through trainers over datasets in order
 for dataset in "${datasets[@]}"; do
@@ -162,7 +171,7 @@ for dataset in "${datasets[@]}"; do
         ;;
 
       "CoOp")
-        run_experiment "$trainer" "$dataset" "$config" "" "" "" "" "$seed"
+        run_experiment "$trainer" "$dataset" "$config" "" "" "" "" "$seed" "TRAINER.COOP.N_CTX 8"
         ;;
 
       "CLIP_Adapter")
