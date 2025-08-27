@@ -5,9 +5,11 @@
 # produces a summary for side-by-side evaluation.
 
 # ======= Summary log setup =======
-# For Linux users (uncomment this line and comment the Windows one)
+# For Linux users (uncomment these lines and comment the Windows ones
+mkdir -p /root/autodl-tmp/results/
 summary_file="/root/autodl-tmp/results/comparison_summary.txt"
-# For Windows users (uncomment this line and comment the Linux one)
+# For Windows users (uncomment these lines and comment the Linux ones)
+# mkdir -p ../autodl-tmp/results/
 # summary_file="../autodl-tmp/results/comparison_summary.txt"
 echo "======== TRAINING SUMMARY ========" > "$summary_file"
 echo "Start time: $(date)" >> "$summary_file"
