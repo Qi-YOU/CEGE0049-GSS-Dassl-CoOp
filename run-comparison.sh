@@ -162,7 +162,7 @@ for dataset in "${datasets[@]}"; do
     # Handle different trainers differently
     case "$trainer" in
 
-      "ZeroshotCLIP")
+      "ZeroR_Trainer" | "ZeroshotCLIP")
         run_experiment "$trainer" "$dataset" "$config" "" "" "" "" "$seed" "--eval-only"
         ;;
 
